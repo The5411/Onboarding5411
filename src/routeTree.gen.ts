@@ -10,33 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SimulacroStageRouteImport } from './routes/simulacro/$stage'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SimulacroStageRoute = SimulacroStageRouteImport.update({
+  id: '/simulacro/$stage',
+  path: '/simulacro/$stage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/simulacro/$stage': typeof SimulacroStageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/simulacro/$stage': typeof SimulacroStageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/simulacro/$stage': typeof SimulacroStageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/simulacro/$stage'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/simulacro/$stage'
+  id: '__root__' | '/' | '/simulacro/$stage'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SimulacroStageRoute: typeof SimulacroStageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +58,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/simulacro/$stage': {
+      id: '/simulacro/$stage'
+      path: '/simulacro/$stage'
+      fullPath: '/simulacro/$stage'
+      preLoaderRoute: typeof SimulacroStageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SimulacroStageRoute: SimulacroStageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import logisticsFlowAsset from "@/assets/proceso5411.png";
 import DependeMarca from "@/assets/DependeMarca.png";
@@ -29,6 +29,7 @@ import {
   ClipboardCheck,
   Forklift,
   Play,
+  GraduationCap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -718,8 +719,8 @@ function Index() {
             {filtered.filter((s) => s.id !== "control-arribo").map((s) => {
               const isOpen = expanded[s.id] ?? true;
               return (
+                <div key={s.id}>
                 <section
-                  key={s.id}
                   id={s.id}
                   className="scroll-mt-8 rounded-2xl border border-border bg-card overflow-hidden shadow-[var(--shadow-soft)]"
                 >
@@ -751,6 +752,23 @@ function Index() {
                     />
                   )}
                 </section>
+
+                {(s.id === "inbound" || s.id === "outbound") && (
+                  <div className="mt-4 flex justify-center">
+                    <Link
+                      to="/simulacro/$stage"
+                      params={{ stage: s.id }}
+                      className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition-transform hover:scale-105"
+                      style={{
+                        background: `linear-gradient(135deg, var(${s.phaseVar}), oklch(from var(${s.phaseVar}) calc(l - 0.12) c h))`,
+                      }}
+                    >
+                      <GraduationCap className="h-4 w-4" />
+                      Hacer simulacro de {s.name}
+                    </Link>
+                  </div>
+                )}
+              </div>
               );
             })}
             {filtered.length === 0 && (
