@@ -14,12 +14,28 @@ import type { DirectoryColumn, DirectoryDataSource } from "@/lib/onboarding/nav-
 
 export function DirectoryView({ dataSource }: { dataSource: DirectoryDataSource }) {
   if (dataSource.type === "sheet") {
-    return <SheetDirectory />;
+    return <SheetDirectory visibleColumns={dataSource.visibleColumns} />;
   }
   return <DirectoryTable columns={dataSource.columns} rows={dataSource.rows} />;
 }
 
-function SheetDirectory() {
+function normalizeLabel(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function filterColumns(columns: DirectoryColumn[], visibleColumns?: string[]): DirectoryColumn[] {
+  if (!visibleColumns || visibleColumns.length === 0) return columns;
+  const wanted = visibleColumns.map(normalizeLabel);
+  return wanted
+    .map((label) => columns.find((col) => normalizeLabel(col.label) === label))
+    .filter((col): col is DirectoryColumn => col !== undefined);
+}
+
+function SheetDirectory({ visibleColumns }: { visibleColumns?: string[] }) {
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["sheet-table", "empleados"],
     queryFn: () => getEmployeesSheet(),
@@ -43,7 +59,7 @@ function SheetDirectory() {
 
   return (
     <DirectoryTable
-      columns={data?.columns ?? []}
+      columns={filterColumns(data?.columns ?? [], visibleColumns)}
       rows={data?.rows ?? []}
       onRefresh={() => refetch()}
       isRefreshing={isFetching}

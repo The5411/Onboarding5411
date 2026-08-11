@@ -26,7 +26,7 @@ export type DirectoryColumn = {
 
 export type DirectoryDataSource =
   | { type: "static"; columns: DirectoryColumn[]; rows: Record<string, string>[] }
-  | { type: "sheet" };
+  | { type: "sheet"; visibleColumns?: string[] };
 
 export type ChecklistItem = {
   id: string;
@@ -169,7 +169,17 @@ export const TRACKS: Track[] = [
         label: "Empleados",
         icon: Users,
         view: "directory",
-        dataSource: { type: "sheet" },
+        dataSource: {
+          type: "sheet",
+          visibleColumns: [
+            "apellido",
+            "nombre",
+            "correo",
+            "contraseña mail",
+            "puesto",
+            "numero de telefono",
+          ],
+        },
       },
       placeholderDoc("empresa.politicas", "Políticas y beneficios", FileText),
       {
