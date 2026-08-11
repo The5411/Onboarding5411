@@ -80,7 +80,7 @@ export function ContentPanel({
         )}
       </div>
 
-      {item.view === "doc" && <DocView sections={item.sections} />}
+      {item.view === "doc" && <DocView sections={item.sections} layout={item.layout} />}
       {item.view === "directory" && <DirectoryView dataSource={item.dataSource} />}
       {item.view === "checklist" && <ChecklistView items={item.items} />}
     </div>
