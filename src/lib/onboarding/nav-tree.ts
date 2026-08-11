@@ -16,7 +16,17 @@ import {
 // URL pública (no sensible) del embed de Google Slides con la guía de
 // Factorial. Se lee de VITE_FACTORIAL_SLIDES_URL — configurala como
 // variable de entorno en Railway (o en .env.local para desarrollo).
-const FACTORIAL_SLIDES_EMBED_URL = import.meta.env.VITE_FACTORIAL_SLIDES_URL ?? "";
+// Se fuerzan los parámetros de autoplay/loop para que se vea como una
+// presentación que avanza sola, en vez de la pantalla interactiva de Slides.
+function toAutoplaySlidesUrl(url: string): string {
+  if (!url) return url;
+  const base = url.split("?")[0];
+  return `${base}?start=true&loop=true&delayms=4000`;
+}
+
+const FACTORIAL_SLIDES_EMBED_URL = toAutoplaySlidesUrl(
+  import.meta.env.VITE_FACTORIAL_SLIDES_URL ?? "",
+);
 
 export type DocSection = {
   id: string;
