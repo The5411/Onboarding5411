@@ -149,7 +149,10 @@ export function AppSidebar({
           {profile?.role === "editor" && (
             <button
               type="button"
-              onClick={() => navigate({ to: "/admin" })}
+              onClick={() => {
+                window.alert("click detectado, navegando a /admin");
+                navigate({ to: "/admin" });
+              }}
               aria-label="Panel de Editor"
               className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
