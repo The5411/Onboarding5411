@@ -1,5 +1,4 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { LEAF_IDS_BY_TRACK } from "@/lib/onboarding/nav-tree";
 
 const STORAGE_KEY = "onboarding_progress";
 
@@ -58,8 +57,7 @@ export function useOnboardingProgress() {
   }, []);
 
   const getGroupProgress = useCallback(
-    (groupId: string) => {
-      const leafIds = LEAF_IDS_BY_TRACK[groupId] ?? [];
+    (leafIds: string[]) => {
       const done = leafIds.filter((id) => progress[id]).length;
       return { done, total: leafIds.length };
     },

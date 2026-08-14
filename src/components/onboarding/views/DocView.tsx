@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { DocSection } from "@/lib/onboarding/nav-tree";
+import { SlidesCarousel } from "@/components/onboarding/SlidesCarousel";
 
 export function DocView({
   sections,
@@ -81,6 +82,11 @@ function FlatDoc({
         {sections.map((section) => (
           <section key={section.id} id={section.id} className="scroll-mt-6">
             <h2 className="mb-3 text-xl font-bold">{section.title}</h2>
+            {section.images && (
+              <div className="mb-4">
+                <SlidesCarousel images={section.images} />
+              </div>
+            )}
             <div
               className="space-y-3 text-sm leading-relaxed text-muted-foreground [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
               onClick={onContentClick}
@@ -155,11 +161,18 @@ function AccordionDoc({
               }`}
             >
               <div className="overflow-hidden">
-                <div
-                  className="space-y-3 border-t border-border px-5 py-5 text-sm leading-relaxed text-muted-foreground [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
-                  onClick={onContentClick}
-                  dangerouslySetInnerHTML={{ __html: section.html }}
-                />
+                <div className="border-t border-border px-5 py-5">
+                  {section.images && (
+                    <div className="mb-4">
+                      <SlidesCarousel images={section.images} />
+                    </div>
+                  )}
+                  <div
+                    className="space-y-3 text-sm leading-relaxed text-muted-foreground [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
+                    onClick={onContentClick}
+                    dangerouslySetInnerHTML={{ __html: section.html }}
+                  />
+                </div>
               </div>
             </div>
           </div>

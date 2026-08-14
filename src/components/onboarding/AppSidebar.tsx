@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronRight, Search } from "lucide-react";
+import { Check, ChevronRight, LogOut, Search } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarInput,
@@ -11,7 +12,9 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
-import { HOME_ICON, HOME_ID, TRACKS } from "@/lib/onboarding/nav-tree";
+import { useAuth } from "@/hooks/useAuth";
+import { useContentTree } from "@/lib/onboarding/content.queries";
+import { getLeafIds, HOME_ICON, HOME_ID } from "@/lib/onboarding/nav-tree";
 
 export function AppSidebar({
   selectedId,
@@ -21,23 +24,23 @@ export function AppSidebar({
   onSelect: (id: string) => void;
 }) {
   const { getGroupProgress } = useOnboardingProgress();
+  const { user, profile, signOut } = useAuth();
+  const { tracks } = useContentTree();
   const [query, setQuery] = useState("");
-  const [openTracks, setOpenTracks] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(TRACKS.map((track) => [track.id, !!track.defaultOpen])),
-  );
+  const [openTracks, setOpenTracks] = useState<Record<string, boolean>>({});
 
   const normalizedQuery = query.trim().toLowerCase();
 
   const visibleItemsByTrack = useMemo(() => {
     if (!normalizedQuery) return null;
     const result: Record<string, boolean[]> = {};
-    for (const track of TRACKS) {
+    for (const track of tracks) {
       result[track.id] = track.items.map((item) =>
         item.label.toLowerCase().includes(normalizedQuery),
       );
     }
     return result;
-  }, [normalizedQuery]);
+  }, [normalizedQuery, tracks]);
 
   return (
     <Sidebar>
@@ -69,12 +72,12 @@ export function AppSidebar({
           </SidebarMenu>
         </SidebarGroup>
 
-        {TRACKS.map((track) => {
+        {tracks.map((track) => {
           const matches = visibleItemsByTrack?.[track.id];
           if (matches && !matches.some(Boolean)) return null;
 
-          const isOpen = normalizedQuery ? true : (openTracks[track.id] ?? false);
-          const { done, total } = getGroupProgress(track.id);
+          const isOpen = normalizedQuery ? true : (openTracks[track.id] ?? !!track.defaultOpen);
+          const { done, total } = getGroupProgress(track.items.flatMap(getLeafIds));
           const isComplete = total > 0 && done === total;
           const TrackIcon = track.icon;
 
@@ -129,6 +132,28 @@ export function AppSidebar({
           );
         })}
       </SidebarContent>
+      <SidebarFooter>
+        <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-xs font-medium text-sidebar-foreground">
+              {user?.email}
+            </div>
+            {profile?.role === "editor" && (
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+                Editor
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => signOut()}
+            aria-label="Cerrar sesión"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }

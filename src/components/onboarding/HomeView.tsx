@@ -1,10 +1,12 @@
 import { Check } from "lucide-react";
 import warehouseVideo from "@/assets/WarehouseVideo.mp4";
 import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
-import { TRACKS } from "@/lib/onboarding/nav-tree";
+import { useContentTree } from "@/lib/onboarding/content.queries";
+import { getLeafIds } from "@/lib/onboarding/nav-tree";
 
 export function HomeView({ onSelect }: { onSelect: (id: string) => void }) {
   const { getGroupProgress } = useOnboardingProgress();
+  const { tracks } = useContentTree();
 
   return (
     <div>
@@ -61,8 +63,8 @@ export function HomeView({ onSelect }: { onSelect: (id: string) => void }) {
 
       <div className="mx-auto max-w-7xl px-6 py-12">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TRACKS.map((track) => {
-            const { done, total } = getGroupProgress(track.id);
+          {tracks.map((track) => {
+            const { done, total } = getGroupProgress(track.items.flatMap(getLeafIds));
             const isComplete = total > 0 && done === total;
             const TrackIcon = track.icon;
             const firstItem = track.items[0];

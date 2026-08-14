@@ -1,7 +1,8 @@
 import { Check } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
-import { findNavItem, HOME_ID } from "@/lib/onboarding/nav-tree";
+import { HOME_ID } from "@/lib/onboarding/nav-tree";
+import { findNavItem, useContentTree } from "@/lib/onboarding/content.queries";
 import { HomeView } from "@/components/onboarding/HomeView";
 import { FlowView } from "@/components/onboarding/views/FlowView";
 import { DocView } from "@/components/onboarding/views/DocView";
@@ -16,6 +17,7 @@ export function ContentPanel({
   onSelect: (id: string) => void;
 }) {
   const { progress, toggleItem } = useOnboardingProgress();
+  const { tracks, isLoading } = useContentTree();
   const trigger = (
     <SidebarTrigger className="fixed left-3 top-3 z-40 rounded-lg bg-card shadow-md md:hidden" />
   );
@@ -29,12 +31,14 @@ export function ContentPanel({
     );
   }
 
-  const resolved = findNavItem(selectedId);
+  const resolved = findNavItem(tracks, selectedId);
   if (!resolved) {
     return (
       <div className="p-6 md:p-10">
         {trigger}
-        <p className="text-sm text-muted-foreground">Sección no encontrada.</p>
+        <p className="text-sm text-muted-foreground">
+          {isLoading ? "Cargando..." : "Sección no encontrada."}
+        </p>
       </div>
     );
   }

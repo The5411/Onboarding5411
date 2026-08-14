@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/onboarding/AppSidebar";
 import { ContentPanel } from "@/components/onboarding/ContentPanel";
 import { HOME_ID } from "@/lib/onboarding/nav-tree";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,6 +27,22 @@ export const Route = createFileRoute("/")({
 
 function OnboardingApp() {
   const [selectedId, setSelectedId] = useState<string>(HOME_ID);
+  const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate({ to: "/login" });
+    }
+  }, [isLoading, user, navigate]);
+
+  if (isLoading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">Cargando...</p>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
