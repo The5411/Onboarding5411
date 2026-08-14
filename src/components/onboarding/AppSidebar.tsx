@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronRight, LogOut, Search, Settings } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +24,7 @@ export function AppSidebar({
   selectedId: string;
   onSelect: (id: string) => void;
 }) {
+  const navigate = useNavigate();
   const { getGroupProgress } = useOnboardingProgress();
   const { user, profile, signOut } = useAuth();
   const { tracks } = useContentTree();
@@ -146,13 +147,14 @@ export function AppSidebar({
             )}
           </div>
           {profile?.role === "editor" && (
-            <Link
-              to="/admin"
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/admin" })}
               aria-label="Panel de Editor"
               className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
               <Settings className="h-4 w-4" />
-            </Link>
+            </button>
           )}
           <button
             type="button"
