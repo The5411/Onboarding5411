@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 
@@ -8,52 +8,94 @@ export type Profile = {
   role: "editor" | "viewer";
 };
 
-export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [sessionLoaded, setSessionLoaded] = useState(false);
-  const [profileLoaded, setProfileLoaded] = useState(false);
+type AuthState = {
+  session: Session | null;
+  profile: Profile | null;
+  sessionLoaded: boolean;
+  profileLoaded: boolean;
+};
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setSessionLoaded(true);
-    });
+let state: AuthState = {
+  session: null,
+  profile: null,
+  sessionLoaded: false,
+  profileLoaded: false,
+};
+const listeners = new Set<() => void>();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setSessionLoaded(true);
-    });
+function setState(patch: Partial<AuthState>) {
+  state = { ...state, ...patch };
+  listeners.forEach((listener) => listener());
+}
 
-    return () => listener.subscription.unsubscribe();
-  }, []);
+function subscribe(callback: () => void) {
+  listeners.add(callback);
+  return () => listeners.delete(callback);
+}
 
-  useEffect(() => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      setProfile(null);
-      setProfileLoaded(true);
-      return;
+function getSnapshot(): AuthState {
+  return state;
+}
+
+function getServerSnapshot(): AuthState {
+  return { session: null, profile: null, sessionLoaded: false, profileLoaded: false };
+}
+
+async function loadProfile(userId: string) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, email, role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  // Si el usuario cambió mientras esperábamos la respuesta, ignorarla.
+  if (state.session?.user?.id !== userId) return;
+  setState({ profile: (data as Profile | null) ?? null, profileLoaded: true });
+}
+
+let initialized = false;
+function ensureInitialized() {
+  if (initialized) return;
+  initialized = true;
+
+  supabase.auth.getSession().then(({ data }) => {
+    setState({ session: data.session, sessionLoaded: true });
+    const userId = data.session?.user?.id;
+    if (userId) {
+      setState({ profileLoaded: false });
+      loadProfile(userId);
+    } else {
+      setState({ profile: null, profileLoaded: true });
     }
-    setProfileLoaded(false);
-    supabase
-      .from("profiles")
-      .select("id, email, role")
-      .eq("id", userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        setProfile((data as Profile | null) ?? null);
-        setProfileLoaded(true);
-      });
-  }, [session?.user?.id]);
+  });
 
-  const user: User | null = session?.user ?? null;
+  supabase.auth.onAuthStateChange((_event, newSession) => {
+    const previousUserId = state.session?.user?.id;
+    setState({ session: newSession, sessionLoaded: true });
+
+    const userId = newSession?.user?.id;
+    if (userId === previousUserId) return;
+
+    if (userId) {
+      setState({ profile: null, profileLoaded: false });
+      loadProfile(userId);
+    } else {
+      setState({ profile: null, profileLoaded: true });
+    }
+  });
+}
+
+export function useAuth() {
+  if (typeof window !== "undefined") ensureInitialized();
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const user: User | null = snapshot.session?.user ?? null;
 
   return {
     user,
-    profile,
-    isEditor: profile?.role === "editor",
-    isLoading: !sessionLoaded || (!!user && !profileLoaded),
+    profile: snapshot.profile,
+    isEditor: snapshot.profile?.role === "editor",
+    isLoading: !snapshot.sessionLoaded || (!!user && !snapshot.profileLoaded),
     signOut: () => supabase.auth.signOut(),
   };
 }
