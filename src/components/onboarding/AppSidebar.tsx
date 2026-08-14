@@ -136,7 +136,7 @@ export function AppSidebar({
         <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs font-medium text-sidebar-foreground">
-              {user?.email}
+              {user?.email?.split("@")[0]}
             </div>
             {profile?.role === "editor" && (
               <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
