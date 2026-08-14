@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronRight, LogOut, Search } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Check, ChevronRight, LogOut, Search, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -144,6 +145,15 @@ export function AppSidebar({
               </div>
             )}
           </div>
+          {profile?.role === "editor" && (
+            <Link
+              to="/admin"
+              aria-label="Panel de Editor"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <Settings className="h-4 w-4" />
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => signOut()}

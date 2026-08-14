@@ -109,3 +109,19 @@ export function findNavItem(
   }
   return null;
 }
+
+// Solo para el panel de Editor. Los items "flow" y las tablas tipo "sheet"
+// no viven en la base, así que no aparecen para editar acá.
+export function isEditableItem(item: NavItem): boolean {
+  if (item.view === "flow") return false;
+  if (item.view === "directory" && item.dataSource.type === "sheet") return false;
+  return true;
+}
+
+export async function updateNavItemContent(
+  itemId: string,
+  content: { sections?: DocSection[]; dataSource?: DirectoryDataSource; items?: ChecklistItem[] },
+) {
+  const { error } = await supabase.from("nav_items").update({ content }).eq("id", itemId);
+  if (error) throw error;
+}
