@@ -6,6 +6,8 @@ import {
   type ChecklistItem,
   type DirectoryDataSource,
   type DocSection,
+  type FaqItem,
+  type FlowStage,
   type NavItem,
   type Track,
 } from "@/lib/onboarding/nav-tree";
@@ -23,12 +25,14 @@ type DbNavItem = {
   track_id: string;
   label: string;
   icon_name: string;
-  view: "doc" | "directory" | "checklist";
+  view: "doc" | "directory" | "checklist" | "flow";
   layout: "flat" | "accordion" | null;
   content: {
     sections?: DocSection[];
     dataSource?: DirectoryDataSource;
     items?: ChecklistItem[];
+    stages?: FlowStage[];
+    faqs?: FaqItem[];
   };
   position: number;
 };
@@ -50,6 +54,14 @@ function toNavItem(row: DbNavItem): NavItem {
       ...base,
       view: "directory",
       dataSource: row.content.dataSource ?? { type: "static", columns: [], rows: [] },
+    };
+  }
+  if (row.view === "flow") {
+    return {
+      ...base,
+      view: "flow",
+      stages: row.content.stages ?? [],
+      faqs: row.content.faqs ?? [],
     };
   }
   return { ...base, view: "checklist", items: row.content.items ?? [] };
@@ -110,17 +122,22 @@ export function findNavItem(
   return null;
 }
 
-// Solo para el panel de Editor. Los items "flow" y las tablas tipo "sheet"
-// no viven en la base, así que no aparecen para editar acá.
+// Solo para el panel de Editor. Las tablas tipo "sheet" (Google Sheets) no
+// viven en la base, así que no aparecen para editar acá.
 export function isEditableItem(item: NavItem): boolean {
-  if (item.view === "flow") return false;
   if (item.view === "directory" && item.dataSource.type === "sheet") return false;
   return true;
 }
 
 export async function updateNavItemContent(
   itemId: string,
-  content: { sections?: DocSection[]; dataSource?: DirectoryDataSource; items?: ChecklistItem[] },
+  content: {
+    sections?: DocSection[];
+    dataSource?: DirectoryDataSource;
+    items?: ChecklistItem[];
+    stages?: FlowStage[];
+    faqs?: FaqItem[];
+  },
 ) {
   const { error } = await supabase.from("nav_items").update({ content }).eq("id", itemId);
   if (error) throw error;

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
 import type { DocSection } from "@/lib/onboarding/nav-tree";
 import { SlidesCarousel } from "@/components/onboarding/SlidesCarousel";
+import { ImageZoomModal } from "@/components/onboarding/ImageZoomModal";
+import { AccordionSections } from "@/components/onboarding/AccordionSections";
 
 export function DocView({
   sections,
@@ -10,7 +11,20 @@ export function DocView({
   sections: DocSection[];
   layout?: "flat" | "accordion";
 }) {
+  if (layout === "accordion") {
+    return <AccordionSections sections={sections} />;
+  }
+  return <FlatDoc sections={sections} />;
+}
+
+function FlatDoc({ sections }: { sections: DocSection[] }) {
+  const [activeId, setActiveId] = useState(sections[0]?.id);
   const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
+
+  const scrollTo = (id: string) => {
+    setActiveId(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const handleContentClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
@@ -18,62 +32,6 @@ export function DocView({
       const img = target as HTMLImageElement;
       setZoomedImage({ src: img.src, alt: img.alt });
     }
-  };
-
-  return (
-    <>
-      {layout === "accordion" ? (
-        <AccordionDoc sections={sections} onContentClick={handleContentClick} />
-      ) : (
-        <FlatDoc sections={sections} onContentClick={handleContentClick} />
-      )}
-
-      {zoomedImage && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 py-6"
-          onClick={() => setZoomedImage(null)}
-        >
-          <div
-            className="relative w-full max-w-5xl rounded-2xl border border-border bg-card p-3 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setZoomedImage(null)}
-              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border text-foreground shadow hover:bg-secondary transition-colors"
-              aria-label="Cerrar"
-            >
-              ×
-            </button>
-            <div className="max-h-[85vh] w-full overflow-auto rounded-xl bg-black/5 flex items-center justify-center">
-              <img
-                src={zoomedImage.src}
-                alt={zoomedImage.alt}
-                className="h-auto w-full max-h-[85vh] object-contain"
-                draggable={false}
-                onContextMenu={(e) => e.preventDefault()}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-type ContentClickHandler = (event: React.MouseEvent<HTMLDivElement>) => void;
-
-function FlatDoc({
-  sections,
-  onContentClick,
-}: {
-  sections: DocSection[];
-  onContentClick: ContentClickHandler;
-}) {
-  const [activeId, setActiveId] = useState(sections[0]?.id);
-
-  const scrollTo = (id: string) => {
-    setActiveId(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -89,7 +47,7 @@ function FlatDoc({
             )}
             <div
               className="space-y-3 text-sm leading-relaxed text-muted-foreground [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
-              onClick={onContentClick}
+              onClick={handleContentClick}
               dangerouslySetInnerHTML={{ __html: section.html }}
             />
           </section>
@@ -121,63 +79,8 @@ function FlatDoc({
           </div>
         </nav>
       )}
-    </div>
-  );
-}
 
-function AccordionDoc({
-  sections,
-  onContentClick,
-}: {
-  sections: DocSection[];
-  onContentClick: ContentClickHandler;
-}) {
-  const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
-
-  const toggle = (id: string) => {
-    setOpenIds((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  return (
-    <div className="space-y-3">
-      {sections.map((section) => {
-        const isOpen = !!openIds[section.id];
-        return (
-          <div key={section.id} className="overflow-hidden rounded-xl border border-border bg-card">
-            <button
-              type="button"
-              onClick={() => toggle(section.id)}
-              aria-expanded={isOpen}
-              className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-secondary/40"
-            >
-              <span className="text-base font-bold">{section.title}</span>
-              <ChevronDown
-                className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            <div
-              className={`grid transition-all duration-200 ease-in-out ${
-                isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-              }`}
-            >
-              <div className="overflow-hidden">
-                <div className="border-t border-border px-5 py-5">
-                  {section.images && (
-                    <div className="mb-4">
-                      <SlidesCarousel images={section.images} />
-                    </div>
-                  )}
-                  <div
-                    className="space-y-3 text-sm leading-relaxed text-muted-foreground [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
-                    onClick={onContentClick}
-                    dangerouslySetInnerHTML={{ __html: section.html }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      <ImageZoomModal image={zoomedImage} onClose={() => setZoomedImage(null)} />
     </div>
   );
 }

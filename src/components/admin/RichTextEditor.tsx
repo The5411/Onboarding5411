@@ -11,8 +11,11 @@ import {
   Link2,
   List,
   ListOrdered,
+  Music,
+  Video,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { AudioEmbed, VideoEmbed } from "@/components/admin/tiptap-embeds";
 
 export function RichTextEditor({
   html,
@@ -22,7 +25,12 @@ export function RichTextEditor({
   onChange: (html: string) => void;
 }) {
   const editor = useEditor({
-    extensions: [StarterKit.configure({ link: { openOnClick: false } }), Image],
+    extensions: [
+      StarterKit.configure({ link: { openOnClick: false } }),
+      Image,
+      VideoEmbed,
+      AudioEmbed,
+    ],
     content: html,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
@@ -132,6 +140,40 @@ function Toolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>>
         aria-label="Insertar imagen"
       >
         <ImageIcon className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          const url = window.prompt(
+            "URL del video (embed de YouTube, ej. https://www.youtube.com/embed/XXXX):",
+          );
+          if (url)
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type: "videoEmbed", attrs: { src: url } })
+              .run();
+        }}
+        className={btn(false)}
+        aria-label="Insertar video"
+      >
+        <Video className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          const url = window.prompt("URL del audio (mp3, etc.):");
+          if (url)
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type: "audioEmbed", attrs: { src: url } })
+              .run();
+        }}
+        className={btn(false)}
+        aria-label="Insertar audio"
+      >
+        <Music className="h-3.5 w-3.5" />
       </button>
       <input
         ref={inputRef}

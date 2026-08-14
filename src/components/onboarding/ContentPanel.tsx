@@ -49,7 +49,7 @@ export function ContentPanel({
     return (
       <>
         {trigger}
-        <FlowView />
+        <FlowView stages={item.stages} faqs={item.faqs} />
       </>
     );
   }

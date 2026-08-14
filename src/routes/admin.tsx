@@ -6,6 +6,7 @@ import { findNavItem, isEditableItem, useContentTree } from "@/lib/onboarding/co
 import { DocSectionsEditor } from "@/components/admin/DocSectionsEditor";
 import { DirectoryEditor } from "@/components/admin/DirectoryEditor";
 import { ChecklistEditor } from "@/components/admin/ChecklistEditor";
+import { FlowContentEditor } from "@/components/admin/FlowContentEditor";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -84,7 +85,7 @@ function AdminPage() {
             Elegí una sección de la izquierda para editarla.
           </p>
         ) : (
-          <div className="max-w-3xl">
+          <div className={resolved.item.view === "flow" ? "max-w-4xl" : "max-w-3xl"}>
             <div className="mb-6">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {resolved.track.label}
@@ -112,6 +113,14 @@ function AdminPage() {
                 key={resolved.item.id}
                 itemId={resolved.item.id}
                 items={resolved.item.items}
+              />
+            )}
+            {resolved.item.view === "flow" && (
+              <FlowContentEditor
+                key={resolved.item.id}
+                itemId={resolved.item.id}
+                stages={resolved.item.stages}
+                faqs={resolved.item.faqs}
               />
             )}
           </div>

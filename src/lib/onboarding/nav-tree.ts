@@ -37,6 +37,29 @@ export type ChecklistItem = {
   href?: string;
 };
 
+// Una etapa de "Flujo operativo". `adminSections`/`warehouseSections`
+// reutilizan el mismo `DocSection` que el resto del contenido — cada
+// actividad/bloque de la columna Administración o Warehouse es una tarjeta
+// con título + HTML (los videos/audios se insertan como <iframe>/<audio>
+// embebidos dentro de ese HTML).
+export type FlowStage = {
+  id: string;
+  number: number;
+  name: string;
+  short: string;
+  phaseVar: string;
+  objective: string;
+  responsible: string;
+  adminSections: DocSection[];
+  warehouseSections: DocSection[];
+};
+
+export type FaqItem = {
+  id: string;
+  q: string;
+  a: string;
+};
+
 type BaseNavItem = {
   id: string;
   label: string;
@@ -44,7 +67,7 @@ type BaseNavItem = {
 };
 
 export type NavItem =
-  | (BaseNavItem & { view: "flow" })
+  | (BaseNavItem & { view: "flow"; stages: FlowStage[]; faqs: FaqItem[] })
   | (BaseNavItem & { view: "doc"; sections: DocSection[]; layout?: "flat" | "accordion" })
   | (BaseNavItem & { view: "directory"; dataSource: DirectoryDataSource })
   | (BaseNavItem & { view: "checklist"; items: ChecklistItem[] });
@@ -77,17 +100,10 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   Users,
 };
 
-// Items que NO viven en Supabase: "Flujo operativo" es JSX a medida
-// (FlowView, con imágenes importadas y modales propios) y "Empleados" lee de
-// un Google Sheet externo. `content.queries.ts` los inserta en la posición
-// que les corresponde dentro del track que llega desde la base.
+// Items que NO viven en Supabase: "Empleados" lee de un Google Sheet
+// externo. `content.queries.ts` lo inserta en la posición que le corresponde
+// dentro del track que llega desde la base.
 export const SPECIAL_ITEMS: { id: string; trackId: string; position: number; item: NavItem }[] = [
-  {
-    id: "wholesale.flujo",
-    trackId: "wholesale",
-    position: 1,
-    item: { id: "wholesale.flujo", label: "Flujo operativo", icon: Boxes, view: "flow" },
-  },
   {
     id: "empresa.empleados",
     trackId: "empresa",
@@ -112,14 +128,12 @@ export const SPECIAL_ITEMS: { id: string; trackId: string; position: number; ite
   },
 ];
 
-const FLOW_STAGE_IDS = ["inbound", "outbound", "shipping"];
-
 export function getLeafIds(item: NavItem): string[] {
   if (item.view === "checklist") {
     return item.items.map((leaf) => leaf.id);
   }
-  if (item.id === "wholesale.flujo") {
-    return FLOW_STAGE_IDS.map((stageId) => `${item.id}.${stageId}`);
+  if (item.view === "flow") {
+    return item.stages.map((stage) => `${item.id}.${stage.id}`);
   }
   return [`${item.id}.completado`];
 }
