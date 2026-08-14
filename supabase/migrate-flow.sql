@@ -2,6 +2,12 @@
 -- contenido de "Flujo operativo" (antes hardcodeado en FlowView.tsx) a la
 -- base, para que sea editable desde /admin.
 -- Correr una sola vez en el SQL Editor, después de schema.sql y seed.sql.
+--
+-- El "alter table" de acá abajo ya está reflejado en schema.sql (por si
+-- algún día hay que recrear la base desde cero); se deja igual acá porque
+-- una base ya existente (creada con la versión vieja de schema.sql) todavía
+-- necesita este alter para poder aceptar la fila "flow" que sigue.
+-- Re-ejecutarlo no rompe nada (drop constraint if exists + add constraint).
 
 alter table public.nav_items drop constraint if exists nav_items_view_check;
 alter table public.nav_items add constraint nav_items_view_check

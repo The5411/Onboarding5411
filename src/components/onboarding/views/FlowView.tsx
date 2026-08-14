@@ -1,3 +1,8 @@
+// "Flujo operativo". `stages`/`faqs` vienen de Supabase y son editables
+// desde /admin (ver FlowContentEditor). `LogisticsFlowMap` de más abajo es
+// la única parte que se quedó hardcodeada a propósito: es una pieza de
+// diseño fija (imagen + hotspots posicionados en % de una grilla), no texto
+// editable, así que no tiene sentido llevarla a la base.
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
@@ -302,6 +307,12 @@ export function FlowView({ stages, faqs }: { stages: FlowStage[]; faqs: FaqItem[
   );
 }
 
+// Pasos visuales sobre la imagen del roadmap — son más granulares que las 3
+// secciones reales (`stages` trae inbound/outbound/returns). El hover
+// siempre muestra la descripción, pero el click (`onJump`→scrollIntoView)
+// solo hace algo si `targetId` matchea un `stage.id` real; "control-arribo"
+// y "batches" no tienen sección propia, así que esos dos no scrollean a
+// ningún lado al hacer click (comportamiento preexistente).
 const FLOW_HOTSPOTS: {
   number: number;
   title: string;

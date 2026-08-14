@@ -7,6 +7,11 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+// El login pide solo "usuario" (sin mostrar el dominio) para que se sienta
+// más simple, pero atrás sigue siendo Supabase Auth con email+password real
+// — se le agrega "@the5411.com" antes de mandarlo. Decisión explícita:
+// mantener Supabase Auth (seguro, con RLS) en vez de un sistema de login
+// custom, a cambio de esta pequeña capa cosmética.
 const COMPANY_EMAIL_DOMAIN = "the5411.com";
 
 function usernameToEmail(usernameInput: string): string {

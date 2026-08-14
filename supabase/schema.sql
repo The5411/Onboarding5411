@@ -32,8 +32,7 @@ create trigger on_auth_user_created
 
 -- ─────────────────────────────────────────────────────────
 -- Estructura de contenido: mismo árbol que nav-tree.ts, en filas.
--- No incluye "wholesale.flujo" (FlowView) ni "empresa.empleados"
--- (Google Sheet) — esos dos se quedan como código.
+-- No incluye "empresa.empleados" (Google Sheet) — ese se queda como código.
 -- ─────────────────────────────────────────────────────────
 create table public.tracks (
   id text primary key,
@@ -48,12 +47,13 @@ create table public.nav_items (
   track_id text not null references public.tracks(id) on delete cascade,
   label text not null,
   icon_name text not null,
-  view text not null check (view in ('doc', 'directory', 'checklist')),
+  view text not null check (view in ('doc', 'directory', 'checklist', 'flow')),
   layout text check (layout in ('flat', 'accordion')),
   -- forma de `content` según `view`:
   --   doc        -> { "sections": [{ "id", "title", "html", "images"? }] }
   --   directory  -> { "dataSource": { "type": "static", "columns": [...], "rows": [...] } }
   --   checklist  -> { "items": [{ "id", "label", "href"? }] }
+  --   flow       -> { "stages": FlowStage[], "faqs": [{ "id", "q", "a" }] }
   content jsonb not null default '{}'::jsonb,
   position int not null
 );

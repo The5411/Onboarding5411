@@ -1,5 +1,9 @@
 -- Onboarding 5411 — migración del contenido existente (generado a partir de nav-tree.ts).
 -- Correr una sola vez en el SQL Editor, después de schema.sql.
+--
+-- Generado por script, no a mano — de ahí que cada `content` sea una sola
+-- línea larga de JSON. Una vez corrido esto, el contenido real se edita
+-- desde /admin (queda en la tabla), no volviendo a tocar este archivo.
 
 insert into public.tracks (id, label, icon_name, default_open, position) values
   ($t$empresa$t$, $t$Empresa$t$, $t$Building2$t$, false, 1),

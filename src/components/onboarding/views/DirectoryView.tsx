@@ -19,6 +19,9 @@ export function DirectoryView({ dataSource }: { dataSource: DirectoryDataSource 
   return <DirectoryTable columns={dataSource.columns} rows={dataSource.rows} />;
 }
 
+// Compara encabezados del Sheet contra `visibleColumns` (nav-tree.ts)
+// ignorando mayúsculas/tildes, porque quien edite el Sheet puede escribir
+// el encabezado con variaciones ("Contraseña Mail" vs "contraseña mail").
 function normalizeLabel(label: string): string {
   return label
     .trim()

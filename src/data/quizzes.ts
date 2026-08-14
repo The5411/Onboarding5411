@@ -15,8 +15,7 @@ export type Quiz = {
 export const QUIZZES: Record<string, Quiz> = {
   inbound: {
     title: "Simulacro — Inbound",
-    description:
-      "Poné a prueba lo que aprendiste sobre la entrada de mercadería al warehouse.",
+    description: "Poné a prueba lo que aprendiste sobre la entrada de mercadería al warehouse.",
     phaseVar: "--phase-1",
     questions: [
       {
@@ -32,8 +31,7 @@ export const QUIZZES: Record<string, Quiz> = {
           "ASN = Advanced Shipping Notice, el aviso anticipado que se carga en Mintsoft con el detalle de la mercadería que va a llegar.",
       },
       {
-        question:
-          "Antes de empezar a cargar un ASN, ¿qué es lo primero que hay que verificar?",
+        question: "Antes de empezar a cargar un ASN, ¿qué es lo primero que hay que verificar?",
         options: [
           "Que el ASN se esté generando para el cliente correcto",
           "Que el warehouse tenga stock disponible",
@@ -71,7 +69,8 @@ export const QUIZZES: Record<string, Quiz> = {
           "Las carton labels se envían recién cuando se confirma por Slack que las cajas llegaron físicamente al warehouse.",
       },
       {
-        question: "Si un producto no está creado en el sistema, ¿qué hay que hacer al cargar el ASN?",
+        question:
+          "Si un producto no está creado en el sistema, ¿qué hay que hacer al cargar el ASN?",
         options: [
           "Omitirlo y cargarlo después",
           "Incluir sus códigos de barra (barcodes)",
@@ -110,8 +109,7 @@ export const QUIZZES: Record<string, Quiz> = {
   },
   outbound: {
     title: "Simulacro — Outbound",
-    description:
-      "Poné a prueba lo que aprendiste sobre la preparación de órdenes de salida.",
+    description: "Poné a prueba lo que aprendiste sobre la preparación de órdenes de salida.",
     phaseVar: "--phase-4",
     questions: [
       {
@@ -170,8 +168,7 @@ export const QUIZZES: Record<string, Quiz> = {
           "El cutoff de pickup es a las 4:00 PM. El warehouse cierra a las 5:00 PM; si no está listo antes del cutoff, queda retenido para el día siguiente.",
       },
       {
-        question:
-          "¿Cuál es el orden correcto de estados de una orden en el Tracker?",
+        question: "¿Cuál es el orden correcto de estados de una orden en el Tracker?",
         options: [
           "Packed → Entered → Packing → Shipped",
           "Entered → Packing → Packed → Routed → Shipped",

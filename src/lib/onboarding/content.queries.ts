@@ -1,3 +1,7 @@
+// Arma el árbol de navegación (tracks + items) leyendo Supabase, y le mezcla
+// encima los SPECIAL_ITEMS hardcodeados (hoy solo "Empleados", el Google
+// Sheet). El resto de la app consume `useContentTree()` sin necesidad de
+// saber qué parte vino de la base y qué parte es especial.
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
 import {

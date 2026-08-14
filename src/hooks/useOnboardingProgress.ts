@@ -1,3 +1,9 @@
+// Mismo patrón de store-singleton que useAuth.ts: varios componentes montan
+// este hook a la vez (sidebar, panel de contenido) y todos deben ver el
+// mismo progreso al instante cuando se marca un ítem, incluso entre pestañas
+// (de ahí el listener de "storage"). Vive en localStorage porque es
+// progreso personal del navegador, no contenido — no tiene por qué estar en
+// Supabase.
 import { useCallback, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "onboarding_progress";

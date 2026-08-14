@@ -7,10 +7,9 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
@@ -37,9 +36,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -77,18 +73,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Process Navigator is an interactive web application that visually guides users through complex processes." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Process Navigator is an interactive web application that visually guides users through complex processes." },
+      { title: "Onboarding 5411" },
+      {
+        name: "description",
+        content:
+          "Guía interactiva de onboarding 5411: empresa, cultura, y el proceso operativo paso a paso.",
+      },
+      { property: "og:title", content: "Onboarding 5411" },
+      {
+        property: "og:description",
+        content:
+          "Guía interactiva de onboarding 5411: empresa, cultura, y el proceso operativo paso a paso.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "Process Navigator is an interactive web application that visually guides users through complex processes." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8dc3324e-f075-41ee-8221-3a0d49610a6e/id-preview-3a4d5959--e6f2cd94-f1fe-43df-a32c-12a304db3609.lovable.app-1782911986508.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8dc3324e-f075-41ee-8221-3a0d49610a6e/id-preview-3a4d5959--e6f2cd94-f1fe-43df-a32c-12a304db3609.lovable.app-1782911986508.png" },
     ],
     links: [
       {

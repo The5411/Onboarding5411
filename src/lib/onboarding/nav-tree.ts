@@ -1,3 +1,8 @@
+// Modelo de contenido de toda la app de onboarding. La mayoría de esto vive
+// como filas en Supabase (`tracks`/`nav_items`, ver content.queries.ts), pero
+// estos tipos son la fuente de verdad tanto para lo que viene de la base
+// como para los dos ítems que se quedan hardcodeados acá (ver SPECIAL_ITEMS
+// más abajo, y el mapa visual de LogisticsFlowMap en FlowView.tsx).
 import {
   Boxes,
   Building2,
@@ -128,6 +133,10 @@ export const SPECIAL_ITEMS: { id: string; trackId: string; position: number; ite
   },
 ];
 
+// IDs de "cosas marcables" dentro de un item, usados por useOnboardingProgress
+// para saber cuánto del item ya se marcó como visto/hecho. checklist/flow
+// tienen varios (un ítem, una etapa); doc/directory se tratan como una sola
+// casilla ("¿ya lo leíste?"), de ahí el id genérico ".completado".
 export function getLeafIds(item: NavItem): string[] {
   if (item.view === "checklist") {
     return item.items.map((leaf) => leaf.id);

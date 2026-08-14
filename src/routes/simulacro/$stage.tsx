@@ -18,9 +18,7 @@ function SimulacroPage() {
     return (
       <div className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center">
         <h1 className="text-2xl font-bold">Simulacro no encontrado</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          No existe un simulacro para "{stage}".
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">No existe un simulacro para "{stage}".</p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold hover:bg-secondary"
@@ -43,10 +41,7 @@ function Quiz({ quiz }: { quiz: (typeof QUIZZES)[string] }) {
 
   const score = useMemo(() => {
     if (!submitted) return 0;
-    return quiz.questions.reduce(
-      (acc, q, i) => (answers[i] === q.correctIndex ? acc + 1 : acc),
-      0,
-    );
+    return quiz.questions.reduce((acc, q, i) => (answers[i] === q.correctIndex ? acc + 1 : acc), 0);
   }, [submitted, answers, quiz.questions]);
 
   const handleSelect = (qIndex: number, optIndex: number) => {

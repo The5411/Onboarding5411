@@ -1,3 +1,10 @@
+// Store singleton a nivel de módulo (vía useSyncExternalStore) en vez de un
+// useState/useEffect normal por componente. Con estado por-componente,
+// AppSidebar y /admin cada uno pedía su propia sesión+profile por separado:
+// /admin podía montarse y ver por un instante "todavía no sé si sos editor"
+// (profile aún no llegó) y redirigirte afuera antes de tiempo — el bug del
+// ícono del engranaje que "no llevaba a nada". Un solo estado compartido
+// evita esa carrera. No volver al patrón por-componente sin resolver esto.
 import { useSyncExternalStore } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
