@@ -1,67 +1,68 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
-import { FlowStageEditor } from "@/components/admin/FlowStageEditor";
+import { SectionListEditor } from "@/components/admin/SectionListEditor";
 import { updateNavItemContent } from "@/lib/onboarding/content.queries";
-import type { FaqItem, FlowStage } from "@/lib/onboarding/nav-tree";
+import type { DocSection, FaqItem } from "@/lib/onboarding/nav-tree";
 
+// Edita la intro + FAQ de "Flujo operativo" (el mapa visual se queda como
+// código). Las etapas (Inbound/Outbound/...) ya no viven acá — son
+// subsecciones propias, se editan con FlowStageEditor.
 export function FlowContentEditor({
   itemId,
-  stages: initialStages,
+  intro: initialIntro,
   faqs: initialFaqs,
 }: {
   itemId: string;
-  stages: FlowStage[];
+  intro: DocSection[];
   faqs: FaqItem[];
 }) {
   const queryClient = useQueryClient();
-  const [stages, setStages] = useState(initialStages);
+  const [intro, setIntro] = useState(initialIntro);
   const [faqs, setFaqs] = useState(initialFaqs);
-  const [faqSaving, setFaqSaving] = useState(false);
-  const [faqSavedAt, setFaqSavedAt] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
 
-  const persist = async (nextStages: FlowStage[], nextFaqs: FaqItem[]) => {
-    await updateNavItemContent(itemId, { stages: nextStages, faqs: nextFaqs });
-    await queryClient.invalidateQueries({ queryKey: ["content-tree"] });
-  };
-
-  const saveStage = async (updatedStage: FlowStage) => {
-    const nextStages = stages.map((s) => (s.id === updatedStage.id ? updatedStage : s));
-    setStages(nextStages);
-    await persist(nextStages, faqs);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updateNavItemContent(itemId, { intro, faqs });
+      await queryClient.invalidateQueries({ queryKey: ["content-tree"] });
+      setSavedAt(Date.now());
+    } finally {
+      setSaving(false);
+    }
   };
 
   const updateFaq = (id: string, patch: Partial<FaqItem>) => {
-    setFaqSavedAt(null);
+    setSavedAt(null);
     setFaqs((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   };
 
   const addFaq = () => {
-    setFaqSavedAt(null);
+    setSavedAt(null);
     setFaqs((prev) => [...prev, { id: crypto.randomUUID(), q: "Nueva pregunta", a: "" }]);
   };
 
   const removeFaq = (id: string) => {
     if (!window.confirm("¿Borrar esta pregunta?")) return;
-    setFaqSavedAt(null);
+    setSavedAt(null);
     setFaqs((prev) => prev.filter((f) => f.id !== id));
-  };
-
-  const saveFaqs = async () => {
-    setFaqSaving(true);
-    try {
-      await persist(stages, faqs);
-      setFaqSavedAt(Date.now());
-    } finally {
-      setFaqSaving(false);
-    }
   };
 
   return (
     <div className="space-y-8">
-      {stages.map((stage) => (
-        <FlowStageEditor key={stage.id} stage={stage} onSave={saveStage} />
-      ))}
+      <div>
+        <h3 className="mb-3 text-lg font-bold">Introducción</h3>
+        <SectionListEditor
+          sections={intro}
+          onChange={(next) => {
+            setSavedAt(null);
+            setIntro(next);
+          }}
+          addLabel="Agregar tarjeta"
+        />
+      </div>
 
       <div className="rounded-2xl border border-border bg-card p-5">
         <h3 className="mb-4 text-lg font-bold">Preguntas frecuentes</h3>
@@ -103,19 +104,19 @@ export function FlowContentEditor({
           <Plus className="h-4 w-4" />
           Agregar pregunta
         </button>
+      </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={saveFaqs}
-            disabled={faqSaving}
-            className="rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity disabled:opacity-60"
-            style={{ background: "var(--gradient-hero)" }}
-          >
-            {faqSaving ? "Guardando..." : "Guardar FAQ"}
-          </button>
-          {faqSavedAt && <span className="text-xs text-muted-foreground">Guardado ✓</span>}
-        </div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity disabled:opacity-60"
+          style={{ background: "var(--gradient-hero)" }}
+        >
+          {saving ? "Guardando..." : "Guardar cambios"}
+        </button>
+        {savedAt && <span className="text-xs text-muted-foreground">Guardado ✓</span>}
       </div>
     </div>
   );

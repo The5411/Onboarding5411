@@ -1,269 +1,50 @@
-// "Flujo operativo". `stages`/`faqs` vienen de Supabase y son editables
-// desde /admin (ver FlowContentEditor). `LogisticsFlowMap` de más abajo es
-// la única parte que se quedó hardcodeada a propósito: es una pieza de
-// diseño fija (imagen + hotspots posicionados en % de una grilla), no texto
-// editable, así que no tiene sentido llevarla a la base.
-import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
-import {
-  Check,
-  ClipboardCheck,
-  GraduationCap,
-  PackageCheck,
-  Truck,
-  Warehouse,
-  type LucideIcon,
-} from "lucide-react";
+// "Flujo operativo": mapa visual (hardcodeado, ver nota abajo) + intro y FAQ
+// editables desde /admin. Cada etapa (Inbound, Outbound, Returns, Crossdock)
+// es su propia subsección con vista propia — no vive acá, ver StageView.tsx.
+import { useState } from "react";
+import { AccordionSections } from "@/components/onboarding/AccordionSections";
+import { ImageZoomModal } from "@/components/onboarding/ImageZoomModal";
+import type { DocSection, FaqItem } from "@/lib/onboarding/nav-tree";
 import logisticsFlowAsset from "@/assets/proceso5411.png";
 import DependeMarca from "@/assets/DependeMarca.png";
 import mapa from "@/assets/Mapa.png";
 import hero from "@/assets/Comunicacion.png";
-import { AccordionSections } from "@/components/onboarding/AccordionSections";
-import { ImageZoomModal } from "@/components/onboarding/ImageZoomModal";
-import type { FaqItem, FlowStage } from "@/lib/onboarding/nav-tree";
 
-const WAREHOUSE_ICONS: Record<string, LucideIcon> = {
-  inbound: Truck,
-  outbound: ClipboardCheck,
-  shipping: PackageCheck,
+// Hotspots del mapa → id de la subsección a la que navegan. Los hotspots 3
+// ("Escanean las cajas") y 4 ("Rearman las cajas") no tienen subsección
+// propia, así que no navegan a ningún lado al hacer click (comportamiento
+// preexistente; el hover sigue mostrando su descripción de todas formas).
+const STAGE_ID_BY_HOTSPOT_TARGET: Record<string, string> = {
+  inbound: "wholesale.flujo.inbound",
+  outbound: "wholesale.flujo.outbound",
+  shipping: "wholesale.flujo.returns",
 };
 
-export function FlowView({ stages, faqs }: { stages: FlowStage[]; faqs: FaqItem[] }) {
-  const { progress: onboardingProgress, toggleItem } = useOnboardingProgress();
-  const [active, setActive] = useState<string>(stages[0]?.id ?? "");
-  const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(stages.map((s) => [s.id, true])),
-  );
-  const [query, setQuery] = useState("");
+export function FlowView({
+  intro,
+  faqs,
+  onSelect,
+}: {
+  intro: DocSection[];
+  faqs: FaqItem[];
+  onSelect: (id: string) => void;
+}) {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible) setActive(visible.target.id);
-      },
-      { rootMargin: "-30% 0px -60% 0px", threshold: 0 },
-    );
-    stages.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) obs.observe(el);
-    });
-    return () => obs.disconnect();
-  }, [stages]);
-
-  const filtered = useMemo(() => {
-    if (!query.trim()) return stages;
-    const q = query.toLowerCase();
-    return stages.filter((s) => JSON.stringify(s).toLowerCase().includes(q));
-  }, [query, stages]);
-
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const goToStage = (hotspotTargetId: string) => {
+    const stageId = STAGE_ID_BY_HOTSPOT_TARGET[hotspotTargetId];
+    if (stageId) onSelect(stageId);
   };
-
-  const activeIndex = stages.findIndex((s) => s.id === active);
-  const progress = stages.length > 0 ? ((activeIndex + 1) / stages.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Top progress bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-border">
-        <div
-          className="h-full transition-all duration-500"
-          style={{ width: `${progress}%`, background: "var(--gradient-hero)" }}
-        />
-      </div>
+      <LogisticsFlowMap onJump={goToStage} />
 
-      {/* Interactive logistics flow roadmap */}
-      <LogisticsFlowMap onJump={scrollTo} />
-
-      {/* Main layout */}
       <div className="mx-auto max-w-7xl px-6 py-12">
-        <main className="min-w-0">
-          {/* Search bar */}
-          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar etapa, documento, actividad..."
-              className="w-full max-w-md rounded-lg border border-border bg-card px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-            <div className="flex gap-2 text-xs">
-              <a
-                href="#faq"
-                className="rounded-lg border border-border bg-card px-3 py-2 font-medium hover:bg-secondary"
-              >
-                FAQ
-              </a>
-            </div>
-          </div>
+        <main className="min-w-0 space-y-16">
+          <AccordionSections sections={intro} />
 
-          {/* Flow diagram */}
-          <section className="mb-16 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]">
-            <h2 className="mb-1 text-xl font-bold">Mapa del proceso</h2>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Flujo end-to-end con dependencias entre etapas
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              {stages.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-2">
-                  <button
-                    onClick={() => scrollTo(s.id)}
-                    className="group flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 transition-all hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <span
-                      className="flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold text-white"
-                      style={{ background: `var(${s.phaseVar})` }}
-                    >
-                      {s.number}
-                    </span>
-                    <span className="text-xs font-medium">{s.name}</span>
-                  </button>
-                  {i < stages.length - 1 && <span className="text-muted-foreground">→</span>}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Stages */}
-          <div className="space-y-12">
-            {filtered.map((s) => {
-              const isOpen = expanded[s.id] ?? true;
-              const leafId = `wholesale.flujo.${s.id}`;
-              const isDone = !!onboardingProgress[leafId];
-              const WhIcon = WAREHOUSE_ICONS[s.id] ?? Warehouse;
-              return (
-                <div key={s.id}>
-                  <section
-                    id={s.id}
-                    className="scroll-mt-8 rounded-2xl border border-border bg-card overflow-hidden shadow-[var(--shadow-soft)]"
-                  >
-                    {/* Header */}
-                    <div
-                      className="relative p-6 md:p-8"
-                      style={{
-                        background: `linear-gradient(135deg, var(${s.phaseVar}) 0%, oklch(from var(${s.phaseVar}) calc(l - 0.1) c h) 100%)`,
-                      }}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-4 text-white">
-                        <div>
-                          <h2 className="mt-1 text-3xl font-bold md:text-4xl">{s.name}</h2>
-                          <p className="mt-2 text-base opacity-90">{s.short}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => toggleItem(leafId)}
-                            aria-pressed={isDone}
-                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold backdrop-blur transition-colors ${
-                              isDone
-                                ? "bg-white text-foreground"
-                                : "bg-white/20 text-white hover:bg-white/30"
-                            }`}
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            {isDone ? "Completado" : "Marcar completado"}
-                          </button>
-                          <button
-                            onClick={() => setExpanded((prev) => ({ ...prev, [s.id]: !isOpen }))}
-                            className="rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold backdrop-blur transition-colors hover:bg-white/30"
-                          >
-                            {isOpen ? "Contraer −" : "Expandir +"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {isOpen && (
-                      <div className="space-y-8 p-6 md:p-8">
-                        {/* Objective banner — common to both areas */}
-                        <div className="rounded-xl border border-border bg-background p-5">
-                          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Objetivo de la etapa
-                          </div>
-                          <p className="mt-2 text-base leading-relaxed">{s.objective}</p>
-                        </div>
-
-                        <div className="grid gap-6 lg:grid-cols-2">
-                          <div className="relative rounded-2xl border border-border bg-card/60 p-4">
-                            <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
-                              <div
-                                className="flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-[var(--shadow-soft)]"
-                                style={{ background: "var(--gradient-hero)" }}
-                              >
-                                <ClipboardCheck className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                                  Perspectiva
-                                </div>
-                                <h3 className="text-lg font-bold">Administración</h3>
-                                <p className="text-xs text-muted-foreground">
-                                  Responsable: {s.responsible}
-                                </p>
-                              </div>
-                            </div>
-                            <AccordionSections sections={s.adminSections} />
-                          </div>
-
-                          <div className="relative overflow-hidden rounded-2xl border border-border p-5 md:p-6">
-                            <WhIcon className="pointer-events-none absolute -right-6 -top-6 h-44 w-44 opacity-[0.07]" />
-                            <div className="relative mb-4 flex items-center gap-2 border-b border-border pb-3">
-                              <div
-                                className="flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-[var(--shadow-soft)]"
-                                style={{
-                                  background: `linear-gradient(135deg, var(${s.phaseVar}), oklch(from var(${s.phaseVar}) calc(l - 0.12) c h))`,
-                                }}
-                              >
-                                <WhIcon className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                                  Perspectiva
-                                </div>
-                                <h3 className="text-lg font-bold">Warehouse</h3>
-                              </div>
-                            </div>
-                            <div className="relative">
-                              <AccordionSections sections={s.warehouseSections} />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </section>
-
-                  {(s.id === "inbound" || s.id === "outbound") && (
-                    <div className="mt-4 flex justify-center">
-                      <Link
-                        to="/simulacro/$stage"
-                        params={{ stage: s.id }}
-                        className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition-transform hover:scale-105"
-                        style={{
-                          background: `linear-gradient(135deg, var(${s.phaseVar}), oklch(from var(${s.phaseVar}) calc(l - 0.12) c h))`,
-                        }}
-                      >
-                        <GraduationCap className="h-4 w-4" />
-                        Hacer simulacro de {s.name}
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {filtered.length === 0 && (
-              <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-                No se encontraron etapas para "{query}".
-              </div>
-            )}
-          </div>
-
-          {/* FAQ */}
-          <section id="faq" className="mt-16 scroll-mt-8">
+          <section id="faq" className="scroll-mt-8">
             <div className="mb-6">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 FAQ
@@ -297,22 +78,12 @@ export function FlowView({ stages, faqs }: { stages: FlowStage[]; faqs: FaqItem[
               })}
             </div>
           </section>
-
-          <footer className="mt-20 border-t border-border pt-8 text-center text-xs text-muted-foreground">
-            Onboarding 5411 — Guía interactiva operativa
-          </footer>
         </main>
       </div>
     </div>
   );
 }
 
-// Pasos visuales sobre la imagen del roadmap — son más granulares que las 3
-// secciones reales (`stages` trae inbound/outbound/returns). El hover
-// siempre muestra la descripción, pero el click (`onJump`→scrollIntoView)
-// solo hace algo si `targetId` matchea un `stage.id` real; "control-arribo"
-// y "batches" no tienen sección propia, así que esos dos no scrollean a
-// ningún lado al hacer click (comportamiento preexistente).
 const FLOW_HOTSPOTS: {
   number: number;
   title: string;

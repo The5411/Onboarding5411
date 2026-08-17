@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronRight, LogOut, Search, Settings } from "lucide-react";
 import {
@@ -15,7 +15,78 @@ import {
 import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentTree } from "@/lib/onboarding/content.queries";
-import { getLeafIds, HOME_ICON, HOME_ID } from "@/lib/onboarding/nav-tree";
+import { getLeafIds, HOME_ICON, HOME_ID, type NavItem } from "@/lib/onboarding/nav-tree";
+
+function itemMatchesQuery(item: NavItem, query: string): boolean {
+  if (item.label.toLowerCase().includes(query)) return true;
+  return item.children?.some((child) => itemMatchesQuery(child, query)) ?? false;
+}
+
+// Fila de un item de sidebar, recursiva: si tiene `children` (subsecciones),
+// se puede expandir/contraer y se renderiza a sí misma para cada hijo, un
+// nivel más adentro. `forceExpanded` la mantiene abierta mientras se busca,
+// para que un resultado en una subsección no quede escondido.
+function NavItemRow({
+  item,
+  depth,
+  selectedId,
+  onSelect,
+  forceExpanded,
+}: {
+  item: NavItem;
+  depth: number;
+  selectedId: string;
+  onSelect: (id: string) => void;
+  forceExpanded: boolean;
+}) {
+  const [open, setOpen] = useState(true);
+  const hasChildren = !!item.children?.length;
+  const isOpen = forceExpanded || open;
+  const Icon = item.icon;
+
+  return (
+    <SidebarMenuItem>
+      <div className="flex items-center gap-0.5">
+        {hasChildren ? (
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-label={isOpen ? "Contraer" : "Expandir"}
+            className="flex h-6 w-5 shrink-0 items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground"
+          >
+            <ChevronRight
+              className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
+            />
+          </button>
+        ) : (
+          <span className="h-6 w-5 shrink-0" />
+        )}
+        <SidebarMenuButton
+          isActive={selectedId === item.id}
+          onClick={() => onSelect(item.id)}
+          className="flex-1 font-normal text-sidebar-foreground/80 data-[active=true]:font-medium data-[active=true]:text-sidebar-foreground"
+        >
+          <Icon />
+          <span>{item.label}</span>
+        </SidebarMenuButton>
+      </div>
+      {hasChildren && isOpen && (
+        <SidebarMenu className="mt-0.5 ml-3.5 border-l border-sidebar-border pl-2.5">
+          {item.children!.map((child) => (
+            <NavItemRow
+              key={child.id}
+              item={child}
+              depth={depth + 1}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              forceExpanded={forceExpanded}
+            />
+          ))}
+        </SidebarMenu>
+      )}
+    </SidebarMenuItem>
+  );
+}
 
 export function AppSidebar({
   selectedId,
@@ -32,17 +103,6 @@ export function AppSidebar({
   const [openTracks, setOpenTracks] = useState<Record<string, boolean>>({});
 
   const normalizedQuery = query.trim().toLowerCase();
-
-  const visibleItemsByTrack = useMemo(() => {
-    if (!normalizedQuery) return null;
-    const result: Record<string, boolean[]> = {};
-    for (const track of tracks) {
-      result[track.id] = track.items.map((item) =>
-        item.label.toLowerCase().includes(normalizedQuery),
-      );
-    }
-    return result;
-  }, [normalizedQuery, tracks]);
 
   return (
     <Sidebar>
@@ -75,8 +135,10 @@ export function AppSidebar({
         </SidebarGroup>
 
         {tracks.map((track) => {
-          const matches = visibleItemsByTrack?.[track.id];
-          if (matches && !matches.some(Boolean)) return null;
+          const visibleItems = normalizedQuery
+            ? track.items.filter((item) => itemMatchesQuery(item, normalizedQuery))
+            : track.items;
+          if (normalizedQuery && visibleItems.length === 0) return null;
 
           const isOpen = normalizedQuery ? true : (openTracks[track.id] ?? !!track.defaultOpen);
           const { done, total } = getGroupProgress(track.items.flatMap(getLeafIds));
@@ -111,22 +173,16 @@ export function AppSidebar({
               >
                 <div className="overflow-hidden">
                   <SidebarMenu className="mt-1 ml-3.5 border-l border-sidebar-border pl-2.5">
-                    {track.items.map((item, i) => {
-                      if (matches && !matches[i]) return null;
-                      const Icon = item.icon;
-                      return (
-                        <SidebarMenuItem key={item.id}>
-                          <SidebarMenuButton
-                            isActive={selectedId === item.id}
-                            onClick={() => onSelect(item.id)}
-                            className="font-normal text-sidebar-foreground/80 data-[active=true]:font-medium data-[active=true]:text-sidebar-foreground"
-                          >
-                            <Icon />
-                            <span>{item.label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
+                    {visibleItems.map((item) => (
+                      <NavItemRow
+                        key={item.id}
+                        item={item}
+                        depth={0}
+                        selectedId={selectedId}
+                        onSelect={onSelect}
+                        forceExpanded={!!normalizedQuery}
+                      />
+                    ))}
                   </SidebarMenu>
                 </div>
               </div>

@@ -45,15 +45,21 @@ create table public.tracks (
 create table public.nav_items (
   id text primary key,
   track_id text not null references public.tracks(id) on delete cascade,
+  -- Subsección de otro nav_item (ej. una etapa de "Flujo operativo", o
+  -- "Hangers y Return Tags" bajo "Majors Requirements"). Cualquier item
+  -- puede tener hijos, sin importar su `view` — se crean/editan desde
+  -- /admin → Estructura, no hace falta tocar código ni SQL.
+  parent_id text references public.nav_items(id) on delete cascade,
   label text not null,
   icon_name text not null,
-  view text not null check (view in ('doc', 'directory', 'checklist', 'flow')),
+  view text not null check (view in ('doc', 'directory', 'checklist', 'flow', 'stage')),
   layout text check (layout in ('flat', 'accordion')),
   -- forma de `content` según `view`:
   --   doc        -> { "sections": [{ "id", "title", "html", "images"? }] }
   --   directory  -> { "dataSource": { "type": "static", "columns": [...], "rows": [...] } }
   --   checklist  -> { "items": [{ "id", "label", "href"? }] }
-  --   flow       -> { "stages": FlowStage[], "faqs": [{ "id", "q", "a" }] }
+  --   flow       -> { "intro": [{ "id", "title", "html", "images"? }], "faqs": [{ "id", "q", "a" }] }
+  --   stage      -> { "short", "phaseVar", "objective", "responsible", "adminSections": [...], "warehouseSections": [...] }
   content jsonb not null default '{}'::jsonb,
   position int not null
 );

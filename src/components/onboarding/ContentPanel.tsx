@@ -5,6 +5,7 @@ import { HOME_ID } from "@/lib/onboarding/nav-tree";
 import { findNavItem, useContentTree } from "@/lib/onboarding/content.queries";
 import { HomeView } from "@/components/onboarding/HomeView";
 import { FlowView } from "@/components/onboarding/views/FlowView";
+import { StageView } from "@/components/onboarding/views/StageView";
 import { DocView } from "@/components/onboarding/views/DocView";
 import { DirectoryView } from "@/components/onboarding/views/DirectoryView";
 import { ChecklistView } from "@/components/onboarding/views/ChecklistView";
@@ -49,14 +50,18 @@ export function ContentPanel({
     return (
       <>
         {trigger}
-        <FlowView stages={item.stages} faqs={item.faqs} />
+        <FlowView intro={item.intro} faqs={item.faqs} onSelect={onSelect} />
       </>
     );
   }
 
   const completedLeafId = `${item.id}.completado`;
   const isCompleted = !!progress[completedLeafId];
-  const showCompletedToggle = item.view === "doc" || item.view === "directory";
+  // Si el item tiene subsecciones, su progreso viene de ellas (ver
+  // getLeafIds) — no tiene sentido un toggle propio que no mueve ese número.
+  const hasChildren = !!item.children?.length;
+  const showCompletedToggle =
+    !hasChildren && (item.view === "doc" || item.view === "directory" || item.view === "stage");
 
   return (
     <div className="p-6 md:p-10">
@@ -87,6 +92,7 @@ export function ContentPanel({
       {item.view === "doc" && <DocView sections={item.sections} layout={item.layout} />}
       {item.view === "directory" && <DirectoryView dataSource={item.dataSource} />}
       {item.view === "checklist" && <ChecklistView items={item.items} />}
+      {item.view === "stage" && <StageView itemId={item.id} label={item.label} content={item} />}
     </div>
   );
 }

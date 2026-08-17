@@ -1,29 +1,36 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { SectionListEditor } from "@/components/admin/SectionListEditor";
-import type { FlowStage } from "@/lib/onboarding/nav-tree";
+import { updateNavItemContent } from "@/lib/onboarding/content.queries";
+import type { StageContent } from "@/lib/onboarding/nav-tree";
 
 const PHASE_OPTIONS = Array.from({ length: 8 }, (_, i) => `--phase-${i + 1}`);
 
+// Edita una etapa de Flujo operativo (Inbound/Outbound/Returns/Crossdock),
+// cada una su propio nav_item. El nombre de la etapa es el `label` del item
+// — eso se edita desde NavStructureEditor, no acá.
 export function FlowStageEditor({
-  stage: initialStage,
-  onSave,
+  itemId,
+  content: initialContent,
 }: {
-  stage: FlowStage;
-  onSave: (stage: FlowStage) => Promise<void>;
+  itemId: string;
+  content: StageContent;
 }) {
-  const [stage, setStage] = useState(initialStage);
+  const queryClient = useQueryClient();
+  const [content, setContent] = useState(initialContent);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
-  const patch = (fields: Partial<FlowStage>) => {
+  const patch = (fields: Partial<StageContent>) => {
     setSavedAt(null);
-    setStage((prev) => ({ ...prev, ...fields }));
+    setContent((prev) => ({ ...prev, ...fields }));
   };
 
   const save = async () => {
     setSaving(true);
     try {
-      await onSave(stage);
+      await updateNavItemContent(itemId, content);
+      await queryClient.invalidateQueries({ queryKey: ["content-tree"] });
       setSavedAt(Date.now());
     } finally {
       setSaving(false);
@@ -31,20 +38,12 @@ export function FlowStageEditor({
   };
 
   return (
-    <div className="space-y-6 rounded-2xl border border-border bg-card p-5">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="text-xs font-semibold text-muted-foreground">Nombre</label>
-          <input
-            value={stage.name}
-            onChange={(e) => patch({ name: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-2">
         <div>
           <label className="text-xs font-semibold text-muted-foreground">Color de la etapa</label>
           <select
-            value={stage.phaseVar}
+            value={content.phaseVar}
             onChange={(e) => patch({ phaseVar: e.target.value })}
             className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           >
@@ -55,10 +54,18 @@ export function FlowStageEditor({
             ))}
           </select>
         </div>
+        <div>
+          <label className="text-xs font-semibold text-muted-foreground">Responsable</label>
+          <input
+            value={content.responsible}
+            onChange={(e) => patch({ responsible: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
         <div className="sm:col-span-2">
           <label className="text-xs font-semibold text-muted-foreground">Descripción corta</label>
           <input
-            value={stage.short}
+            value={content.short}
             onChange={(e) => patch({ short: e.target.value })}
             className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
@@ -68,17 +75,9 @@ export function FlowStageEditor({
             Objetivo de la etapa
           </label>
           <textarea
-            value={stage.objective}
+            value={content.objective}
             onChange={(e) => patch({ objective: e.target.value })}
             rows={2}
-            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <div>
-          <label className="text-xs font-semibold text-muted-foreground">Responsable</label>
-          <input
-            value={stage.responsible}
-            onChange={(e) => patch({ responsible: e.target.value })}
             className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
@@ -89,7 +88,7 @@ export function FlowStageEditor({
           Administración — actividades y puntos críticos
         </h4>
         <SectionListEditor
-          sections={stage.adminSections}
+          sections={content.adminSections}
           onChange={(adminSections) => patch({ adminSections })}
           addLabel="Agregar actividad"
         />
@@ -100,7 +99,7 @@ export function FlowStageEditor({
           Warehouse — qué pasa físicamente
         </h4>
         <SectionListEditor
-          sections={stage.warehouseSections}
+          sections={content.warehouseSections}
           onChange={(warehouseSections) => patch({ warehouseSections })}
           addLabel="Agregar bloque"
         />
