@@ -39,8 +39,19 @@ export function SlideImagesEditor({
 
   return (
     <div className="space-y-2 border-t border-border pt-3">
-      <div className="text-xs font-semibold text-muted-foreground">
-        Carrusel de diapositivas (opcional)
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-semibold text-muted-foreground">
+          Carrusel de diapositivas (opcional)
+        </div>
+        {images.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="text-xs font-medium text-destructive hover:underline"
+          >
+            Borrar todas
+          </button>
+        )}
       </div>
 
       {images.length > 0 && (
