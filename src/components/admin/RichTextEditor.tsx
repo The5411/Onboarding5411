@@ -14,8 +14,8 @@ import {
   Music,
   Video,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
 import { AudioEmbed, VideoEmbed } from "@/components/admin/tiptap-embeds";
+import { uploadContentImage } from "@/lib/supabase/uploadContentImage";
 
 export function RichTextEditor({
   html,
@@ -62,13 +62,14 @@ function Toolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>>
 
   const handleFile = async (file: File) => {
     setUploading(true);
-    const path = `${crypto.randomUUID()}-${file.name}`;
-    const { error } = await supabase.storage.from("content-images").upload(path, file);
-    if (!error) {
-      const { data } = supabase.storage.from("content-images").getPublicUrl(path);
-      editor.chain().focus().setImage({ src: data.publicUrl }).run();
+    try {
+      const url = await uploadContentImage(file);
+      editor.chain().focus().setImage({ src: url }).run();
+    } catch {
+      // ignora fallos de subida, igual que antes
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
   };
 
   return (

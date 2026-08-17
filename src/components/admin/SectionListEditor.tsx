@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { SlideImagesEditor } from "@/components/admin/SlideImagesEditor";
 import type { DocSection } from "@/lib/onboarding/nav-tree";
 
 // Editor puro (sin botón de guardar ni llamadas a Supabase) de una lista de
@@ -82,6 +83,14 @@ export function SectionListEditor({
             html={section.html}
             onChange={(html) => updateSection(section.id, { html })}
           />
+          <div className="mt-3">
+            <SlideImagesEditor
+              images={section.images ?? []}
+              onChange={(images) =>
+                updateSection(section.id, { images: images.length > 0 ? images : undefined })
+              }
+            />
+          </div>
         </div>
       ))}
 
