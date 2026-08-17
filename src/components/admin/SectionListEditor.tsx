@@ -1,10 +1,13 @@
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import type { DocSection } from "@/lib/onboarding/nav-tree";
 
 // Editor puro (sin botón de guardar ni llamadas a Supabase) de una lista de
 // tarjetas título+HTML. Lo usa `DocSectionsEditor` (que le agrega guardado)
-// y `FlowStageEditor` (que guarda todo el contenido de la etapa junto).
+// y `FlowStageEditor` (que guarda todo el contenido de la etapa junto). El
+// orden de la lista ES el orden en que se ven las tarjetas en la app — no
+// hay un campo "position" separado, así que reordenar es solo reordenar
+// este array y guardar como siempre.
 export function SectionListEditor({
   sections,
   onChange,
@@ -27,11 +30,39 @@ export function SectionListEditor({
     onChange(sections.filter((s) => s.id !== id));
   };
 
+  const moveSection = (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= sections.length) return;
+    const next = [...sections];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    onChange(next);
+  };
+
   return (
     <div className="space-y-4">
-      {sections.map((section) => (
+      {sections.map((section, index) => (
         <div key={section.id} className="rounded-xl border border-border bg-card p-4">
           <div className="mb-3 flex items-center gap-2">
+            <div className="flex flex-col">
+              <button
+                type="button"
+                onClick={() => moveSection(index, -1)}
+                disabled={index === 0}
+                className="flex h-4 w-9 items-center justify-center rounded-t-md border border-b-0 border-border text-muted-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
+                aria-label="Mover arriba"
+              >
+                <ChevronUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => moveSection(index, 1)}
+                disabled={index === sections.length - 1}
+                className="flex h-4 w-9 items-center justify-center rounded-b-md border border-border text-muted-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
+                aria-label="Mover abajo"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+            </div>
             <input
               value={section.title}
               onChange={(e) => updateSection(section.id, { title: e.target.value })}
