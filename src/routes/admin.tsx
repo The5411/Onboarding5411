@@ -157,6 +157,7 @@ function AdminPage() {
                 itemId={resolved.item.id}
                 intro={resolved.item.intro}
                 faqs={resolved.item.faqs}
+                roadmap={resolved.item.roadmap}
               />
             )}
             {resolved.item.view === "stage" && (

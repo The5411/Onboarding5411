@@ -53,6 +53,65 @@ export type FaqItem = {
   a: string;
 };
 
+// Textos e imágenes editables del mapa visual de Flujo operativo
+// (LogisticsFlowMap, en FlowView.tsx). La imagen de fondo y la posición de
+// cada hotspot se quedan hardcodeadas (dependen una de la otra: mover la
+// imagen sin mover el hotspot lo desalinea) — solo título/descripción de
+// cada paso y las 3 imágenes de los modales son "contenido" real.
+export type RoadmapContent = {
+  hotspots: { number: number; title: string; description: string }[];
+  modalImages: { marca: string; mapa: string; envio: string };
+};
+
+// Fallback si todavía no se corrió la migración que carga esto en Supabase
+// (o si a alguien se le borra por error) — mismo texto/imágenes que había
+// hardcodeado antes, para que la página nunca se vea vacía.
+export const DEFAULT_ROADMAP_CONTENT: RoadmapContent = {
+  hotspots: [
+    {
+      number: 1,
+      title: "Llega el camión / avión",
+      description:
+        "Inbound: DHL, UPS o freight entregan la mercadería. El cliente envió previamente el Packing List y se creó el ASN en Mintsoft.",
+    },
+    {
+      number: 2,
+      title: "Llega al depósito",
+      description:
+        "Descarga de cajas en el warehouse 5411. Verificación física de cantidades y comparación contra el ASN cargado.",
+    },
+    {
+      number: 3,
+      title: "Escanean las cajas",
+      description:
+        "Escaneo de labels y registro en sistema. Validación de tracking number y SKU contra el catálogo.",
+    },
+    {
+      number: 4,
+      title: "Rearman las cajas",
+      description:
+        "Pick & Pack: apertura de cajas, búsqueda de productos y armado de nuevas cajas según órdenes Major y Boutique.",
+    },
+    {
+      number: 5,
+      title: "Etiquetan y preparan envío",
+      description:
+        "Generación de labels, tracking number y commercial invoice. Preparación de las cajas para el pickup del carrier.",
+    },
+    {
+      number: 6,
+      title: "Despachan las cajas",
+      description:
+        "Shipping outbound: UPS, TForce Freight u otro carrier retira la mercadería. Salida del warehouse rumbo al cliente final.",
+    },
+  ],
+  modalImages: {
+    marca: "/images/roadmap/depende-marca.png",
+    mapa: "/images/roadmap/mapa-warehouse.png",
+    envio: "/images/roadmap/comunicacion.png",
+  },
+};
+
 type BaseNavItem = {
   id: string;
   label: string;
@@ -78,7 +137,12 @@ export type StageContent = {
 };
 
 export type NavItem =
-  | (BaseNavItem & { view: "flow"; intro: DocSection[]; faqs: FaqItem[] })
+  | (BaseNavItem & {
+      view: "flow";
+      intro: DocSection[];
+      faqs: FaqItem[];
+      roadmap: RoadmapContent;
+    })
   | (BaseNavItem & ({ view: "stage" } & StageContent))
   | (BaseNavItem & { view: "doc"; sections: DocSection[]; layout?: "flat" | "accordion" })
   | (BaseNavItem & { view: "directory"; dataSource: DirectoryDataSource })

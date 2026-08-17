@@ -4,11 +4,8 @@
 import { useState } from "react";
 import { AccordionSections } from "@/components/onboarding/AccordionSections";
 import { ImageZoomModal } from "@/components/onboarding/ImageZoomModal";
-import type { DocSection, FaqItem } from "@/lib/onboarding/nav-tree";
+import type { DocSection, FaqItem, RoadmapContent } from "@/lib/onboarding/nav-tree";
 import logisticsFlowAsset from "@/assets/proceso5411.png";
-import DependeMarca from "@/assets/DependeMarca.png";
-import mapa from "@/assets/Mapa.png";
-import hero from "@/assets/Comunicacion.png";
 
 // Hotspots del mapa → id de la subsección a la que navegan. Los hotspots 3
 // ("Escanean las cajas") y 4 ("Rearman las cajas") no tienen subsección
@@ -23,10 +20,12 @@ const STAGE_ID_BY_HOTSPOT_TARGET: Record<string, string> = {
 export function FlowView({
   intro,
   faqs,
+  roadmap,
   onSelect,
 }: {
   intro: DocSection[];
   faqs: FaqItem[];
+  roadmap: RoadmapContent;
   onSelect: (id: string) => void;
 }) {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -38,7 +37,7 @@ export function FlowView({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LogisticsFlowMap onJump={goToStage} />
+      <LogisticsFlowMap roadmap={roadmap} onJump={goToStage} />
 
       <div className="mx-auto max-w-7xl px-6 py-12">
         <main className="min-w-0 space-y-16">
@@ -84,68 +83,36 @@ export function FlowView({
   );
 }
 
-const FLOW_HOTSPOTS: {
-  number: number;
-  title: string;
-  description: string;
-  targetId: string;
-  phaseVar: string;
-}[] = [
-  {
-    number: 1,
-    title: "Llega el camión / avión",
-    description:
-      "Inbound: DHL, UPS o freight entregan la mercadería. El cliente envió previamente el Packing List y se creó el ASN en Mintsoft.",
-    targetId: "inbound",
-    phaseVar: "--phase-1",
-  },
-  {
-    number: 2,
-    title: "Llega al depósito",
-    description:
-      "Descarga de cajas en el warehouse 5411. Verificación física de cantidades y comparación contra el ASN cargado.",
-    targetId: "inbound",
-    phaseVar: "--phase-2",
-  },
-  {
-    number: 3,
-    title: "Escanean las cajas",
-    description:
-      "Escaneo de labels y registro en sistema. Validación de tracking number y SKU contra el catálogo.",
-    targetId: "control-arribo",
-    phaseVar: "--phase-3",
-  },
-  {
-    number: 4,
-    title: "Rearman las cajas",
-    description:
-      "Pick & Pack: apertura de cajas, búsqueda de productos y armado de nuevas cajas según órdenes Major y Boutique.",
-    targetId: "batches",
-    phaseVar: "--phase-5",
-  },
-  {
-    number: 5,
-    title: "Etiquetan y preparan envío",
-    description:
-      "Generación de labels, tracking number y commercial invoice. Preparación de las cajas para el pickup del carrier.",
-    targetId: "outbound",
-    phaseVar: "--phase-6",
-  },
-  {
-    number: 6,
-    title: "Despachan las cajas",
-    description:
-      "Shipping outbound: UPS, TForce Freight u otro carrier retira la mercadería. Salida del warehouse rumbo al cliente final.",
-    targetId: "shipping",
-    phaseVar: "--phase-8",
-  },
+// Layout fijo de los hotspots (posición en la grilla de 6, a dónde
+// navegan, color) — título y descripción de cada uno vienen de `roadmap`
+// (editable desde /admin) y se mezclan por `number` al renderizar.
+const HOTSPOT_LAYOUT: { number: number; targetId: string; phaseVar: string }[] = [
+  { number: 1, targetId: "inbound", phaseVar: "--phase-1" },
+  { number: 2, targetId: "inbound", phaseVar: "--phase-2" },
+  { number: 3, targetId: "control-arribo", phaseVar: "--phase-3" },
+  { number: 4, targetId: "batches", phaseVar: "--phase-5" },
+  { number: 5, targetId: "outbound", phaseVar: "--phase-6" },
+  { number: 6, targetId: "shipping", phaseVar: "--phase-8" },
 ];
 
-function LogisticsFlowMap({ onJump }: { onJump: (id: string) => void }) {
+function LogisticsFlowMap({
+  roadmap,
+  onJump,
+}: {
+  roadmap: RoadmapContent;
+  onJump: (id: string) => void;
+}) {
   const [hovered, setHovered] = useState<number | null>(null);
   const [activeModalImage, setActiveModalImage] = useState<"marca" | "envio" | "mapa" | null>(null);
   const active = hovered ?? 1;
-  const activeHotspot = FLOW_HOTSPOTS.find((h) => h.number === active)!;
+
+  const textByNumber = new Map(roadmap.hotspots.map((h) => [h.number, h]));
+  const hotspots = HOTSPOT_LAYOUT.map((h) => ({
+    ...h,
+    title: textByNumber.get(h.number)?.title ?? "",
+    description: textByNumber.get(h.number)?.description ?? "",
+  }));
+  const activeHotspot = hotspots.find((h) => h.number === active)!;
 
   return (
     <section className="border-b border-border bg-card/40">
@@ -177,7 +144,7 @@ function LogisticsFlowMap({ onJump }: { onJump: (id: string) => void }) {
           />
 
           <div className="absolute inset-0 grid grid-cols-6">
-            {FLOW_HOTSPOTS.map((h) => {
+            {hotspots.map((h) => {
               const isActive = active === h.number;
               return (
                 <button
@@ -288,10 +255,10 @@ function LogisticsFlowMap({ onJump }: { onJump: (id: string) => void }) {
               ? {
                   src:
                     activeModalImage === "marca"
-                      ? DependeMarca
+                      ? roadmap.modalImages.marca
                       : activeModalImage === "mapa"
-                        ? mapa
-                        : hero,
+                        ? roadmap.modalImages.mapa
+                        : roadmap.modalImages.envio,
                   alt:
                     activeModalImage === "marca"
                       ? "Depende de la Marca"
@@ -327,7 +294,7 @@ function LogisticsFlowMap({ onJump }: { onJump: (id: string) => void }) {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          {FLOW_HOTSPOTS.map((h) => (
+          {hotspots.map((h) => (
             <button
               key={h.number}
               onMouseEnter={() => setHovered(h.number)}

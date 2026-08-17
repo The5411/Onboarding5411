@@ -50,7 +50,7 @@ export function ContentPanel({
     return (
       <>
         {trigger}
-        <FlowView intro={item.intro} faqs={item.faqs} onSelect={onSelect} />
+        <FlowView intro={item.intro} faqs={item.faqs} roadmap={item.roadmap} onSelect={onSelect} />
       </>
     );
   }

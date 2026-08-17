@@ -5,6 +5,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
 import {
+  DEFAULT_ROADMAP_CONTENT,
   ICON_MAP,
   SPECIAL_ITEMS,
   type ChecklistItem,
@@ -13,6 +14,7 @@ import {
   type DocSection,
   type FaqItem,
   type NavItem,
+  type RoadmapContent,
   type StageContent,
   type Track,
 } from "@/lib/onboarding/nav-tree";
@@ -28,6 +30,7 @@ export type NavItemContent = Partial<StageContent> & {
   items?: ChecklistItem[];
   intro?: DocSection[];
   faqs?: FaqItem[];
+  roadmap?: RoadmapContent;
 };
 
 type DbNavItem = {
@@ -75,6 +78,7 @@ function toNavItem(row: DbNavItem): NavItem {
       view: "flow",
       intro: row.content.intro ?? [],
       faqs: row.content.faqs ?? [],
+      roadmap: row.content.roadmap ?? DEFAULT_ROADMAP_CONTENT,
     };
   }
   if (row.view === "stage") {
