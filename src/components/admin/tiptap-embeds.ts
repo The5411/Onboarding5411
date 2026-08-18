@@ -38,9 +38,9 @@ export const VideoEmbed = Node.create({
         "data-video-embed": "",
         "data-video-src": node.attrs.src,
         class:
-          "flex aspect-video w-full items-center justify-center gap-2 overflow-hidden rounded-xl border border-border bg-black text-sm font-semibold text-white",
+          "flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold",
       }),
-      ["span", { class: "text-lg" }, "▶"],
+      ["span", { class: "text-primary" }, "▶"],
       ["span", {}, "Ver video"],
     ];
   },

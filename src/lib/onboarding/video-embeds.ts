@@ -17,11 +17,11 @@ export function withVideoEmbedButtons(html: string): string {
     const safeSrc = escapeHtmlAttr(src);
     return (
       `<button type="button" data-video-embed data-video-src="${safeSrc}" ` +
-      `class="group flex aspect-video w-full items-center justify-center gap-2 overflow-hidden ` +
-      `rounded-xl border border-border bg-black text-sm font-semibold text-white transition-colors ` +
-      `hover:bg-black/85">` +
+      `class="flex w-full items-center justify-center gap-2 rounded-xl border border-border ` +
+      `bg-card px-4 py-2.5 text-sm font-semibold transition-all hover:bg-secondary ` +
+      `hover:scale-[1.02] active:scale-[0.98]">` +
       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" ` +
-      `class="h-10 w-10 flex-shrink-0 transition-transform group-hover:scale-110">` +
+      `class="h-4 w-4 flex-shrink-0 text-primary">` +
       `<circle cx="12" cy="12" r="10"></circle>` +
       `<polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"></polygon>` +
       `</svg>` +
