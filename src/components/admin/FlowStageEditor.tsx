@@ -72,7 +72,10 @@ export function FlowStageEditor({
         </div>
         <div className="sm:col-span-2">
           <label className="text-xs font-semibold text-muted-foreground">
-            Objetivo de la etapa
+            Objetivo de la etapa{" "}
+            <span className="font-normal normal-case text-muted-foreground/70">
+              (Enter separa en párrafos)
+            </span>
           </label>
           <textarea
             value={content.objective}

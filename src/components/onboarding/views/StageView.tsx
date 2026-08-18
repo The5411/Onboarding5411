@@ -50,7 +50,7 @@ export function StageView({
         <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Objetivo de la etapa
         </div>
-        <p className="mt-2 text-base leading-relaxed">{content.objective}</p>
+        <p className="mt-2 whitespace-pre-line text-base leading-relaxed">{content.objective}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
