@@ -77,8 +77,8 @@ export function FlowStageEditor({
           <textarea
             value={content.objective}
             onChange={(e) => patch({ objective: e.target.value })}
-            rows={2}
-            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            rows={5}
+            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
       </div>
