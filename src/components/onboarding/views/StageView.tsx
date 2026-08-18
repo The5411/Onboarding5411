@@ -97,6 +97,19 @@ export function StageView({
         </div>
       </div>
 
+      {content.notes && content.notes.length > 0 && (
+        <div className="space-y-4">
+          {content.notes.map((note) => (
+            <div key={note.id} className="rounded-xl border border-border bg-card p-5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {note.label}
+              </div>
+              <p className="mt-2 whitespace-pre-line text-base leading-relaxed">{note.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {hasSimulacro && (
         <div className="flex justify-center">
           <Link
