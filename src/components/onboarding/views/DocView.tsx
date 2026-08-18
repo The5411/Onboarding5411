@@ -46,7 +46,7 @@ function FlatDoc({ sections }: { sections: DocSection[] }) {
               </div>
             )}
             <div
-              className="space-y-3 text-sm leading-relaxed text-muted-foreground [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
+              className="prose prose-sm dark:prose-invert max-w-none [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
               onClick={handleContentClick}
               dangerouslySetInnerHTML={{ __html: section.html }}
             />

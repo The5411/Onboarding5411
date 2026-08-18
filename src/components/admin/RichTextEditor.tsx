@@ -2,20 +2,52 @@ import { useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import Highlight from "@tiptap/extension-highlight";
 import {
   Bold,
   Heading2,
   Heading3,
+  Highlighter,
   ImageIcon,
   Italic,
   Link2,
   List,
   ListOrdered,
   Music,
+  Palette,
+  Smile,
   Video,
 } from "lucide-react";
 import { AudioEmbed, VideoEmbed } from "@/components/admin/tiptap-embeds";
 import { uploadContentImage } from "@/lib/supabase/uploadContentImage";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+// Set acotado y relevante para contenido de operaciones/warehouse — no un
+// selector de emojis completo, para no complicar la barra de herramientas.
+const EMOJI_OPTIONS = [
+  "📦",
+  "🚚",
+  "✅",
+  "⚠️",
+  "📋",
+  "🔍",
+  "📌",
+  "🏷️",
+  "📅",
+  "💡",
+  "🔔",
+  "📸",
+  "🔒",
+  "📤",
+  "📥",
+  "🧾",
+  "⏱️",
+  "👥",
+  "📞",
+  "✉️",
+];
 
 export function RichTextEditor({
   html,
@@ -28,6 +60,9 @@ export function RichTextEditor({
     extensions: [
       StarterKit.configure({ link: { openOnClick: false } }),
       Image,
+      TextStyle,
+      Color,
+      Highlight,
       VideoEmbed,
       AudioEmbed,
     ],
@@ -133,6 +168,56 @@ function Toolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>>
       >
         <Link2 className="h-3.5 w-3.5" />
       </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleHighlight().run()}
+        className={btn(editor.isActive("highlight"))}
+        aria-label="Resaltar"
+      >
+        <Highlighter className="h-3.5 w-3.5" />
+      </button>
+      <label
+        className={btn(false) + " relative cursor-pointer"}
+        title="Color de texto"
+        aria-label="Color de texto"
+      >
+        <Palette className="h-3.5 w-3.5" />
+        <input
+          type="color"
+          onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+      </label>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().unsetColor().run()}
+        className={btn(false)}
+        aria-label="Quitar color"
+        title="Quitar color de texto"
+      >
+        <Palette className="h-3.5 w-3.5 opacity-40" />
+      </button>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button type="button" className={btn(false)} aria-label="Insertar ícono">
+            <Smile className="h-3.5 w-3.5" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-2">
+          <div className="grid grid-cols-6 gap-1">
+            {EMOJI_OPTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => editor.chain().focus().insertContent(emoji).run()}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-base transition-colors hover:bg-secondary"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}

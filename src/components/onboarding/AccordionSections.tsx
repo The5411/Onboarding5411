@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { AlertTriangle, ChevronDown } from "lucide-react";
 import { SlidesCarousel } from "@/components/onboarding/SlidesCarousel";
 import { ImageZoomModal } from "@/components/onboarding/ImageZoomModal";
 import type { DocSection } from "@/lib/onboarding/nav-tree";
@@ -29,20 +29,32 @@ export function AccordionSections({ sections }: { sections: DocSection[] }) {
       <div className="space-y-3">
         {sections.map((section) => {
           const isOpen = !!openIds[section.id];
+          const isWarning = section.accent === "warning";
           return (
             <div
               key={section.id}
-              className="overflow-hidden rounded-xl border border-border bg-card"
+              className={`overflow-hidden rounded-xl border ${
+                isWarning ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"
+              }`}
             >
               <button
                 type="button"
                 onClick={() => toggle(section.id)}
                 aria-expanded={isOpen}
-                className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-secondary/40"
+                className={`flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors ${
+                  isWarning ? "hover:bg-destructive/10" : "hover:bg-secondary/40"
+                }`}
               >
-                <span className="text-base font-bold">{section.title}</span>
+                <span
+                  className={`flex items-center gap-2 text-base font-bold ${isWarning ? "text-destructive" : ""}`}
+                >
+                  {isWarning && <AlertTriangle className="h-4 w-4 flex-shrink-0" />}
+                  {section.title}
+                </span>
                 <ChevronDown
-                  className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 flex-shrink-0 transition-transform ${
+                    isWarning ? "text-destructive" : "text-muted-foreground"
+                  } ${isOpen ? "rotate-180" : ""}`}
                 />
               </button>
               <div
@@ -51,14 +63,16 @@ export function AccordionSections({ sections }: { sections: DocSection[] }) {
                 }`}
               >
                 <div className="overflow-hidden">
-                  <div className="border-t border-border px-5 py-5">
+                  <div
+                    className={`border-t px-5 py-5 ${isWarning ? "border-destructive/20" : "border-border"}`}
+                  >
                     {section.images && (
                       <div className="mb-4">
                         <SlidesCarousel images={section.images} />
                       </div>
                     )}
                     <div
-                      className="space-y-3 text-sm leading-relaxed text-muted-foreground [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
+                      className="prose prose-sm dark:prose-invert max-w-none [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
                       onClick={handleContentClick}
                       dangerouslySetInnerHTML={{ __html: section.html }}
                     />

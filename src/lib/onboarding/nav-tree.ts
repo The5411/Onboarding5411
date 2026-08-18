@@ -30,6 +30,9 @@ export type DocSection = {
   // Rutas de imágenes (una por diapositiva) para mostrar como carrusel propio,
   // sin depender del embed de Google Slides.
   images?: string[];
+  // Marca la tarjeta como un llamado de atención (p.ej. "Puntos críticos /
+  // Validaciones"): la pinta con acento rojo en vez del estilo neutro default.
+  accent?: "warning";
 };
 
 export type DirectoryColumn = {

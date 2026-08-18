@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { SlideImagesEditor } from "@/components/admin/SlideImagesEditor";
 import type { DocSection } from "@/lib/onboarding/nav-tree";
@@ -70,6 +70,23 @@ export function SectionListEditor({
               className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-ring"
               placeholder="Título de la tarjeta"
             />
+            <button
+              type="button"
+              onClick={() =>
+                updateSection(section.id, {
+                  accent: section.accent === "warning" ? undefined : "warning",
+                })
+              }
+              aria-pressed={section.accent === "warning"}
+              title="Resaltar como punto crítico"
+              className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${
+                section.accent === "warning"
+                  ? "border-destructive/40 bg-destructive/10 text-destructive"
+                  : "border-border text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              <AlertTriangle className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={() => removeSection(section.id)}
