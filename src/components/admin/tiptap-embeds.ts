@@ -13,28 +13,35 @@ export const VideoEmbed = Node.create({
     return {
       src: {
         default: "",
-        parseHTML: (element) => element.querySelector("iframe")?.getAttribute("src") ?? "",
+        // Los videos guardados antes de que esto fuera un botón todavía
+        // tienen un <iframe> real adentro — seguimos leyendo el src de ahí
+        // si no hay data-video-src (formato nuevo).
+        parseHTML: (element) =>
+          element.getAttribute("data-video-src") ??
+          element.querySelector("iframe")?.getAttribute("src") ??
+          "",
       },
     };
   },
   parseHTML() {
-    return [{ tag: "div[data-video-embed]" }];
+    return [{ tag: "div[data-video-embed], button[data-video-embed]" }];
   },
   renderHTML({ HTMLAttributes, node }) {
+    // Nada de <svg> acá: Tiptap arma este nodo con document.createElement
+    // sin namespace SVG, así que el ícono vectorial queda invisible dentro
+    // del editor (el HTML final guardado se re-parsea normal y ahí sí se ve
+    // bien — ver withVideoEmbedButtons). Un ▶ de texto evita el problema.
     return [
-      "div",
+      "button",
       mergeAttributes(HTMLAttributes, {
+        type: "button",
         "data-video-embed": "",
-        class: "aspect-video w-full overflow-hidden rounded-xl border border-border bg-black",
+        "data-video-src": node.attrs.src,
+        class:
+          "flex aspect-video w-full items-center justify-center gap-2 overflow-hidden rounded-xl border border-border bg-black text-sm font-semibold text-white",
       }),
-      [
-        "iframe",
-        {
-          src: node.attrs.src,
-          class: "h-full w-full",
-          allowfullscreen: "true",
-        },
-      ],
+      ["span", { class: "text-lg" }, "▶"],
+      ["span", {}, "Ver video"],
     ];
   },
 });

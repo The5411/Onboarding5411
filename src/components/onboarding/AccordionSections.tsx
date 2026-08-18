@@ -2,6 +2,8 @@ import { useState } from "react";
 import { AlertTriangle, ChevronDown } from "lucide-react";
 import { SlidesCarousel } from "@/components/onboarding/SlidesCarousel";
 import { ImageZoomModal } from "@/components/onboarding/ImageZoomModal";
+import { VideoModal } from "@/components/onboarding/VideoModal";
+import { withVideoEmbedButtons } from "@/lib/onboarding/video-embeds";
 import type { DocSection } from "@/lib/onboarding/nav-tree";
 
 // Lista de tarjetas colapsables (título + HTML), con zoom de imágenes al
@@ -11,6 +13,7 @@ import type { DocSection } from "@/lib/onboarding/nav-tree";
 export function AccordionSections({ sections }: { sections: DocSection[] }) {
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
   const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
+  const [openVideoSrc, setOpenVideoSrc] = useState<string | null>(null);
 
   const toggle = (id: string) => {
     setOpenIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -21,6 +24,12 @@ export function AccordionSections({ sections }: { sections: DocSection[] }) {
     if (target.tagName === "IMG") {
       const img = target as HTMLImageElement;
       setZoomedImage({ src: img.src, alt: img.alt });
+      return;
+    }
+    const videoTrigger = target.closest("[data-video-embed]");
+    if (videoTrigger) {
+      const src = videoTrigger.getAttribute("data-video-src");
+      if (src) setOpenVideoSrc(src);
     }
   };
 
@@ -74,7 +83,7 @@ export function AccordionSections({ sections }: { sections: DocSection[] }) {
                     <div
                       className="prose prose-sm dark:prose-invert max-w-none [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
                       onClick={handleContentClick}
-                      dangerouslySetInnerHTML={{ __html: section.html }}
+                      dangerouslySetInnerHTML={{ __html: withVideoEmbedButtons(section.html) }}
                     />
                   </div>
                 </div>
@@ -85,6 +94,7 @@ export function AccordionSections({ sections }: { sections: DocSection[] }) {
       </div>
 
       <ImageZoomModal image={zoomedImage} onClose={() => setZoomedImage(null)} />
+      <VideoModal src={openVideoSrc} onClose={() => setOpenVideoSrc(null)} />
     </>
   );
 }
