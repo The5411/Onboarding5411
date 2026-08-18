@@ -44,6 +44,50 @@ export const VideoEmbed = Node.create({
       ["span", {}, "Ver video"],
     ];
   },
+  // Sin esto, un video ya insertado no se puede volver a tocar — el único
+  // camino era borrar el bloque entero y agregarlo de nuevo. El NodeView
+  // hace que el botón, dentro del editor, abra el mismo prompt de URL para
+  // corregirla o reemplazarla en el lugar.
+  addNodeView() {
+    return ({ node, editor, getPos }) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("data-video-embed", "");
+      button.className =
+        "flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold cursor-pointer hover:bg-secondary";
+
+      const icon = document.createElement("span");
+      icon.className = "text-primary";
+      icon.textContent = "▶";
+
+      const label = document.createElement("span");
+      label.textContent = "Ver video (click para editar la URL)";
+
+      button.append(icon, label);
+
+      // mousedown + preventDefault (no "click") es lo que evita que
+      // ProseMirror procese su propia selección sobre este elemento antes de
+      // que el prompt le robe el foco — si no, tira un error de consola
+      // inofensivo pero ruidoso ("Selection ... must point at the current
+      // document") por la carrera entre el foco del prompt y el editor.
+      button.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        const url = window.prompt(
+          "URL del video (embed de YouTube, ej. https://www.youtube.com/embed/XXXX):",
+          node.attrs.src,
+        );
+        if (url === null) return;
+        const pos = typeof getPos === "function" ? getPos() : undefined;
+        if (typeof pos === "number") {
+          editor.view.dispatch(
+            editor.view.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, src: url }),
+          );
+        }
+      });
+
+      return { dom: button };
+    };
+  },
 });
 
 export const AudioEmbed = Node.create({
