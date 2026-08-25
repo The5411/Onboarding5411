@@ -91,7 +91,14 @@ function toNavItem(row: DbNavItem): NavItem {
       responsible: row.content.responsible ?? "",
       adminSections: row.content.adminSections ?? [],
       warehouseSections: row.content.warehouseSections ?? [],
-      notes: row.content.notes ?? [],
+      // Los boxes se guardaban con `text` plano antes de tener editor rico;
+      // seguimos leyendo esa forma vieja como `html` si todavía no se
+      // volvieron a guardar con el campo nuevo.
+      notes: (row.content.notes ?? []).map((note) => ({
+        id: note.id,
+        label: note.label,
+        html: note.html ?? (note as unknown as { text?: string }).text ?? "",
+      })),
     };
   }
   return { ...base, view: "checklist", items: row.content.items ?? [] };

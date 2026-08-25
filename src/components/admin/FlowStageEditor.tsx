@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { SectionListEditor } from "@/components/admin/SectionListEditor";
 import { updateNavItemContent } from "@/lib/onboarding/content.queries";
 import type { StageContent, StageNote } from "@/lib/onboarding/nav-tree";
@@ -31,7 +32,7 @@ export function FlowStageEditor({
 
   const addNote = () => {
     patch({
-      notes: [...notes, { id: crypto.randomUUID(), label: "Nuevo box", text: "" }],
+      notes: [...notes, { id: crypto.randomUUID(), label: "Nuevo box", html: "" }],
     });
   };
 
@@ -152,13 +153,7 @@ export function FlowStageEditor({
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <textarea
-                value={note.text}
-                onChange={(e) => updateNote(note.id, { text: e.target.value })}
-                rows={4}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Texto (Enter separa en párrafos)"
-              />
+              <RichTextEditor html={note.html} onChange={(html) => updateNote(note.id, { html })} />
             </div>
           ))}
           <button

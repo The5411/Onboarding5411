@@ -9,8 +9,12 @@ import {
   Warehouse,
   type LucideIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AccordionSections } from "@/components/onboarding/AccordionSections";
+import { ImageZoomModal } from "@/components/onboarding/ImageZoomModal";
+import { VideoModal } from "@/components/onboarding/VideoModal";
+import { withVideoEmbedButtons } from "@/lib/onboarding/video-embeds";
 import type { StageContent } from "@/lib/onboarding/nav-tree";
 
 const WAREHOUSE_ICONS: Record<string, LucideIcon> = {
@@ -31,6 +35,23 @@ export function StageView({
   const stageKey = itemId.split(".").pop() ?? "";
   const WhIcon = WAREHOUSE_ICONS[stageKey] ?? Warehouse;
   const hasSimulacro = stageKey === "inbound" || stageKey === "outbound";
+
+  const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
+  const [openVideoSrc, setOpenVideoSrc] = useState<string | null>(null);
+
+  const handleNoteClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.tagName === "IMG") {
+      const img = target as HTMLImageElement;
+      setZoomedImage({ src: img.src, alt: img.alt });
+      return;
+    }
+    const videoTrigger = target.closest("[data-video-embed]");
+    if (videoTrigger) {
+      const src = videoTrigger.getAttribute("data-video-src");
+      if (src) setOpenVideoSrc(src);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -104,11 +125,18 @@ export function StageView({
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {note.label}
               </div>
-              <p className="mt-2 whitespace-pre-line text-base leading-relaxed">{note.text}</p>
+              <div
+                className="prose prose-sm dark:prose-invert mt-2 max-w-none [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
+                onClick={handleNoteClick}
+                dangerouslySetInnerHTML={{ __html: withVideoEmbedButtons(note.html) }}
+              />
             </div>
           ))}
         </div>
       )}
+
+      <ImageZoomModal image={zoomedImage} onClose={() => setZoomedImage(null)} />
+      <VideoModal src={openVideoSrc} onClose={() => setOpenVideoSrc(null)} />
 
       {hasSimulacro && (
         <div className="flex justify-center">

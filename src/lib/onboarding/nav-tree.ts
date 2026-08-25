@@ -130,14 +130,14 @@ type BaseNavItem = {
 // etapa es su propio nav_item, con `label`/`id`/`position` propios y este
 // contenido de dos columnas (Administración/Warehouse). Los videos/audios se
 // insertan como <iframe>/<audio> embebidos dentro del HTML de cada tarjeta.
-// Caja de texto simple (label + párrafo), mismo estilo visual que "Objetivo
-// de la etapa". Se muestra debajo de las columnas Administración/Warehouse
-// — para notas sueltas que no encajan como una tarjeta más de ninguna de
-// las dos columnas.
+// Caja de contenido libre (label + HTML enriquecido, mismo editor que las
+// tarjetas de Administración/Warehouse — texto, imágenes y video). Se muestra
+// debajo de las columnas Administración/Warehouse — para notas sueltas que no
+// encajan como una tarjeta más de ninguna de las dos columnas.
 export type StageNote = {
   id: string;
   label: string;
-  text: string;
+  html: string;
 };
 
 export type StageContent = {
