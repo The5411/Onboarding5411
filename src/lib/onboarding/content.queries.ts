@@ -91,6 +91,7 @@ function toNavItem(row: DbNavItem): NavItem {
       responsible: row.content.responsible ?? "",
       adminSections: row.content.adminSections ?? [],
       warehouseSections: row.content.warehouseSections ?? [],
+      notes: row.content.notes ?? [],
     };
   }
   return { ...base, view: "checklist", items: row.content.items ?? [] };
