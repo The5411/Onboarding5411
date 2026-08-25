@@ -1,4 +1,5 @@
 import { mergeAttributes, Node } from "@tiptap/core";
+import { normalizeVideoUrl } from "@/lib/onboarding/video-embeds";
 
 // Nodos custom de Tiptap para poder insertar y volver a editar videos (embed
 // de YouTube u otro iframe) y audios dentro de una tarjeta de texto. El HTML
@@ -73,14 +74,17 @@ export const VideoEmbed = Node.create({
       button.addEventListener("mousedown", (event) => {
         event.preventDefault();
         const url = window.prompt(
-          "URL del video (embed de YouTube, ej. https://www.youtube.com/embed/XXXX):",
+          "URL del video (pegá el link de YouTube tal cual, ej. https://youtu.be/XXXX):",
           node.attrs.src,
         );
         if (url === null) return;
         const pos = typeof getPos === "function" ? getPos() : undefined;
         if (typeof pos === "number") {
           editor.view.dispatch(
-            editor.view.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, src: url }),
+            editor.view.state.tr.setNodeMarkup(pos, undefined, {
+              ...node.attrs,
+              src: normalizeVideoUrl(url),
+            }),
           );
         }
       });

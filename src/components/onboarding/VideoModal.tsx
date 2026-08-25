@@ -1,5 +1,8 @@
+import { normalizeVideoUrl } from "@/lib/onboarding/video-embeds";
+
 export function VideoModal({ src, onClose }: { src: string | null; onClose: () => void }) {
   if (!src) return null;
+  const embedSrc = normalizeVideoUrl(src);
 
   return (
     <div
@@ -19,7 +22,7 @@ export function VideoModal({ src, onClose }: { src: string | null; onClose: () =
         </button>
         <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
           <iframe
-            src={src.includes("?") ? `${src}&autoplay=1` : `${src}?autoplay=1`}
+            src={embedSrc.includes("?") ? `${embedSrc}&autoplay=1` : `${embedSrc}?autoplay=1`}
             className="h-full w-full"
             allow="autoplay; fullscreen"
             allowFullScreen

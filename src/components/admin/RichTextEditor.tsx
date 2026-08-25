@@ -21,6 +21,7 @@ import {
   Video,
 } from "lucide-react";
 import { AudioEmbed, VideoEmbed } from "@/components/admin/tiptap-embeds";
+import { normalizeVideoUrl } from "@/lib/onboarding/video-embeds";
 import { uploadContentImage } from "@/lib/supabase/uploadContentImage";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -231,13 +232,13 @@ function Toolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>>
         type="button"
         onClick={() => {
           const url = window.prompt(
-            "URL del video (embed de YouTube, ej. https://www.youtube.com/embed/XXXX):",
+            "URL del video (pegá el link de YouTube tal cual, ej. https://youtu.be/XXXX):",
           );
           if (url)
             editor
               .chain()
               .focus()
-              .insertContent({ type: "videoEmbed", attrs: { src: url } })
+              .insertContent({ type: "videoEmbed", attrs: { src: normalizeVideoUrl(url) } })
               .run();
         }}
         className={btn(false)}
