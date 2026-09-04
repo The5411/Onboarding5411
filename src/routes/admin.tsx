@@ -160,6 +160,7 @@ function AdminPage() {
                 key={resolved.item.id}
                 itemId={resolved.item.id}
                 sections={resolved.item.sections}
+                layout={resolved.item.layout}
                 onDirtyChange={setIsEditorDirty}
               />
             )}

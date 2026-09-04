@@ -287,11 +287,12 @@ export async function createNavItem(input: {
 
 export async function updateNavItemMeta(
   itemId: string,
-  patch: { label?: string; iconName?: string },
+  patch: { label?: string; iconName?: string; layout?: "flat" | "accordion" },
 ) {
   const update: Record<string, string> = {};
   if (patch.label !== undefined) update.label = patch.label;
   if (patch.iconName !== undefined) update.icon_name = patch.iconName;
+  if (patch.layout !== undefined) update.layout = patch.layout;
   const { error } = await supabase.from("nav_items").update(update).eq("id", itemId);
   if (error) throw error;
 }
