@@ -50,10 +50,31 @@ function splitDelimited(line: string, delimiter: string): string[] {
   return cells.map((c) => c.trim());
 }
 
+// Excel exportado con configuración regional en español usa ";" como
+// separador (porque usa "," como separador decimal) — probamos cada
+// candidato y nos quedamos con el que más aparece en la primera línea, en
+// vez de asumir tab/coma nomás.
+function detectDelimiter(line: string): string {
+  let best = ",";
+  let bestCount = -1;
+  for (const candidate of ["\t", ";", ","]) {
+    const count = line.split(candidate).length - 1;
+    if (count > bestCount) {
+      bestCount = count;
+      best = candidate;
+    }
+  }
+  return best;
+}
+
 function parseTable(text: string): string[][] {
-  const lines = text.split(/\r\n|\r|\n/).filter((line) => line.trim().length > 0);
+  // Excel en Windows suele anteponer un BOM al exportar .csv — si no se
+  // saca, la primera celda del encabezado nunca matchea con el nombre real
+  // de la columna.
+  const withoutBom = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+  const lines = withoutBom.split(/\r\n|\r|\n/).filter((line) => line.trim().length > 0);
   if (lines.length === 0) return [];
-  const delimiter = lines[0].includes("\t") ? "\t" : ",";
+  const delimiter = detectDelimiter(lines[0]);
   return lines.map((line) => splitDelimited(line, delimiter));
 }
 
