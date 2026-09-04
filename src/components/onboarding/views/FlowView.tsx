@@ -1,9 +1,12 @@
 // "Flujo operativo": mapa visual (hardcodeado, ver nota abajo) + intro y FAQ
 // editables desde /admin. Cada etapa (Inbound, Outbound, Returns, Crossdock)
 // es su propia subsección con vista propia — no vive acá, ver StageView.tsx.
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { AccordionSections } from "@/components/onboarding/AccordionSections";
 import { ImageZoomModal } from "@/components/onboarding/ImageZoomModal";
+import { VideoModal } from "@/components/onboarding/VideoModal";
+import { withVideoEmbedButtons } from "@/lib/onboarding/video-embeds";
 import type { DocSection, FaqItem, RoadmapContent } from "@/lib/onboarding/nav-tree";
 import logisticsFlowAsset from "@/assets/proceso5411.png";
 
@@ -28,11 +31,71 @@ export function FlowView({
   roadmap: RoadmapContent;
   onSelect: (id: string) => void;
 }) {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [openFaqId, setOpenFaqId] = useState<string | null>(faqs[0]?.id ?? null);
+  const [faqQuery, setFaqQuery] = useState("");
+  const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
+  const [openVideoSrc, setOpenVideoSrc] = useState<string | null>(null);
 
   const goToStage = (hotspotTargetId: string) => {
     const stageId = STAGE_ID_BY_HOTSPOT_TARGET[hotspotTargetId];
     if (stageId) onSelect(stageId);
+  };
+
+  const handleAnswerClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.tagName === "IMG") {
+      const img = target as HTMLImageElement;
+      setZoomedImage({ src: img.src, alt: img.alt });
+      return;
+    }
+    const videoTrigger = target.closest("[data-video-embed]");
+    if (videoTrigger) {
+      const src = videoTrigger.getAttribute("data-video-src");
+      if (src) setOpenVideoSrc(src);
+    }
+  };
+
+  const hasCategories = faqs.some((f) => f.category?.trim());
+  const normalizedQuery = faqQuery.trim().toLowerCase();
+  const visibleFaqs = normalizedQuery
+    ? faqs.filter(
+        (f) =>
+          f.q.toLowerCase().includes(normalizedQuery) ||
+          (f.category ?? "").toLowerCase().includes(normalizedQuery),
+      )
+    : faqs;
+
+  const faqGroups = useMemo(() => {
+    if (!hasCategories) return [{ label: null as string | null, items: visibleFaqs }];
+    const groups = new Map<string, FaqItem[]>();
+    for (const f of visibleFaqs) {
+      const key = f.category?.trim() || "Generales";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(f);
+    }
+    return Array.from(groups.entries()).map(([label, items]) => ({ label, items }));
+  }, [visibleFaqs, hasCategories]);
+
+  const renderFaqItem = (f: FaqItem) => {
+    const open = openFaqId === f.id;
+    return (
+      <div key={f.id} className="rounded-xl border border-border bg-card overflow-hidden">
+        <button
+          onClick={() => setOpenFaqId(open ? null : f.id)}
+          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-secondary/40"
+        >
+          <span className="text-sm font-semibold">{f.q}</span>
+          <span className={`text-xl transition-transform ${open ? "rotate-45" : ""}`}>+</span>
+        </button>
+        {open && (
+          <div
+            className="prose prose-sm dark:prose-invert max-w-none border-t border-border bg-secondary/20 px-5 py-4 [&_img]:cursor-zoom-in [&_img]:transition-transform [&_img]:hover:scale-[1.01]"
+            onClick={handleAnswerClick}
+            dangerouslySetInnerHTML={{ __html: withVideoEmbedButtons(f.a) }}
+          />
+        )}
+      </div>
+    );
   };
 
   return (
@@ -44,41 +107,50 @@ export function FlowView({
           <AccordionSections sections={intro} />
 
           <section id="faq" className="scroll-mt-8">
-            <div className="mb-6">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                FAQ
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  FAQ
+                </div>
+                <h2 className="mt-1 text-3xl font-bold">Preguntas frecuentes</h2>
               </div>
-              <h2 className="mt-1 text-3xl font-bold">Preguntas frecuentes</h2>
+              {faqs.length > 4 && (
+                <div className="relative w-full max-w-xs">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={faqQuery}
+                    onChange={(e) => setFaqQuery(e.target.value)}
+                    placeholder="Buscar una pregunta..."
+                    className="w-full rounded-lg border border-border bg-card py-2 pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              {faqs.map((f, i) => {
-                const open = openFaq === i;
-                return (
-                  <div
-                    key={f.id}
-                    className="rounded-xl border border-border bg-card overflow-hidden"
-                  >
-                    <button
-                      onClick={() => setOpenFaq(open ? null : i)}
-                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-secondary/40"
-                    >
-                      <span className="text-sm font-semibold">{f.q}</span>
-                      <span className={`text-xl transition-transform ${open ? "rotate-45" : ""}`}>
-                        +
-                      </span>
-                    </button>
-                    {open && (
-                      <div className="border-t border-border bg-secondary/20 px-5 py-4 text-sm text-muted-foreground">
-                        {f.a}
-                      </div>
+
+            {normalizedQuery && visibleFaqs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay preguntas que coincidan con "{faqQuery}".
+              </p>
+            ) : (
+              <div className="space-y-8">
+                {faqGroups.map((group) => (
+                  <div key={group.label ?? "_flat"} className="space-y-2">
+                    {group.label && (
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        {group.label}
+                      </h3>
                     )}
+                    {group.items.map(renderFaqItem)}
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </section>
         </main>
       </div>
+
+      <ImageZoomModal image={zoomedImage} onClose={() => setZoomedImage(null)} />
+      <VideoModal src={openVideoSrc} onClose={() => setOpenVideoSrc(null)} />
     </div>
   );
 }

@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { SectionListEditor } from "@/components/admin/SectionListEditor";
+import { SaveBar } from "@/components/admin/SaveBar";
+import { useContentEditorState } from "@/hooks/useContentEditorState";
 import { updateNavItemContent } from "@/lib/onboarding/content.queries";
 import type { StageContent, StageNote } from "@/lib/onboarding/nav-tree";
 
@@ -14,17 +14,20 @@ const PHASE_OPTIONS = Array.from({ length: 8 }, (_, i) => `--phase-${i + 1}`);
 export function FlowStageEditor({
   itemId,
   content: initialContent,
+  onDirtyChange,
 }: {
   itemId: string;
   content: StageContent;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const queryClient = useQueryClient();
-  const [content, setContent] = useState(initialContent);
-  const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const { content, setContent, saving, hasUndo, save, undoLastSave } = useContentEditorState(
+    itemId,
+    initialContent,
+    (content) => updateNavItemContent(itemId, content),
+    onDirtyChange,
+  );
 
   const patch = (fields: Partial<StageContent>) => {
-    setSavedAt(null);
     setContent((prev) => ({ ...prev, ...fields }));
   };
 
@@ -43,17 +46,6 @@ export function FlowStageEditor({
   const removeNote = (id: string) => {
     if (!window.confirm("¿Borrar este box?")) return;
     patch({ notes: notes.filter((n) => n.id !== id) });
-  };
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await updateNavItemContent(itemId, content);
-      await queryClient.invalidateQueries({ queryKey: ["content-tree"] });
-      setSavedAt(Date.now());
-    } finally {
-      setSaving(false);
-    }
   };
 
   return (
@@ -167,18 +159,13 @@ export function FlowStageEditor({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity disabled:opacity-60"
-          style={{ background: "var(--gradient-hero)" }}
-        >
-          {saving ? "Guardando..." : "Guardar etapa"}
-        </button>
-        {savedAt && <span className="text-xs text-muted-foreground">Guardado ✓</span>}
-      </div>
+      <SaveBar
+        saving={saving}
+        hasUndo={hasUndo}
+        onSave={save}
+        onUndo={undoLastSave}
+        label="Guardar etapa"
+      />
     </div>
   );
 }

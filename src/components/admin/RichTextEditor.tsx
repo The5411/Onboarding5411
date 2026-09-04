@@ -7,6 +7,7 @@ import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import {
   Bold,
+  Code,
   Heading2,
   Heading3,
   Highlighter,
@@ -17,7 +18,11 @@ import {
   ListOrdered,
   Music,
   Palette,
+  Quote,
+  Redo2,
   Smile,
+  Strikethrough,
+  Undo2,
   Video,
 } from "lucide-react";
 import { AudioEmbed, VideoEmbed } from "@/components/admin/tiptap-embeds";
@@ -128,6 +133,14 @@ function Toolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>>
       </button>
       <button
         type="button"
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        className={btn(editor.isActive("strike"))}
+        aria-label="Tachado"
+      >
+        <Strikethrough className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         className={btn(editor.isActive("heading", { level: 2 }))}
         aria-label="Título"
@@ -176,6 +189,22 @@ function Toolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>>
         aria-label="Resaltar"
       >
         <Highlighter className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        className={btn(editor.isActive("blockquote"))}
+        aria-label="Cita"
+      >
+        <Quote className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        className={btn(editor.isActive("codeBlock"))}
+        aria-label="Bloque de código"
+      >
+        <Code className="h-3.5 w-3.5" />
       </button>
       <label
         className={btn(false) + " relative cursor-pointer"}
@@ -273,6 +302,25 @@ function Toolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>>
           e.target.value = "";
         }}
       />
+      <div className="mx-1 h-5 w-px bg-border" />
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editor.can().undo()}
+        className={btn(false) + " disabled:cursor-not-allowed disabled:opacity-30"}
+        aria-label="Deshacer"
+      >
+        <Undo2 className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editor.can().redo()}
+        className={btn(false) + " disabled:cursor-not-allowed disabled:opacity-30"}
+        aria-label="Rehacer"
+      >
+        <Redo2 className="h-3.5 w-3.5" />
+      </button>
       {uploading && <span className="text-xs text-muted-foreground">Subiendo...</span>}
     </div>
   );

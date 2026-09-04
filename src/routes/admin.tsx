@@ -21,12 +21,38 @@ function AdminPage() {
   const { tracks, isLoading: treeLoading } = useContentTree();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"content" | "structure">("content");
+  const [isEditorDirty, setIsEditorDirty] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!user || !isEditor)) {
       navigate({ to: "/" });
     }
   }, [authLoading, user, isEditor, navigate]);
+
+  // Confirma antes de perder cambios sin guardar cuando se navega a otra
+  // sección o se cambia de modo (Contenido / Estructura) — el refresh o
+  // cierre de pestaña ya lo cubre useContentEditorState con beforeunload.
+  const selectItem = (id: string) => {
+    if (
+      isEditorDirty &&
+      !window.confirm("Tenés cambios sin guardar en esta sección. ¿Salir igual y perderlos?")
+    ) {
+      return;
+    }
+    setIsEditorDirty(false);
+    setSelectedId(id);
+  };
+
+  const selectMode = (next: "content" | "structure") => {
+    if (
+      isEditorDirty &&
+      !window.confirm("Tenés cambios sin guardar en esta sección. ¿Salir igual y perderlos?")
+    ) {
+      return;
+    }
+    setIsEditorDirty(false);
+    setMode(next);
+  };
 
   if (authLoading || !isEditor) {
     return (
@@ -52,7 +78,7 @@ function AdminPage() {
         <div className="mb-4 flex gap-1 rounded-lg bg-secondary/50 p-1">
           <button
             type="button"
-            onClick={() => setMode("content")}
+            onClick={() => selectMode("content")}
             className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
               mode === "content"
                 ? "bg-card text-foreground shadow-sm"
@@ -63,7 +89,7 @@ function AdminPage() {
           </button>
           <button
             type="button"
-            onClick={() => setMode("structure")}
+            onClick={() => selectMode("structure")}
             className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
               mode === "structure"
                 ? "bg-card text-foreground shadow-sm"
@@ -92,7 +118,7 @@ function AdminPage() {
                           item={item}
                           depth={0}
                           selectedId={selectedId}
-                          onSelect={setSelectedId}
+                          onSelect={selectItem}
                         />
                       ))}
                     </ul>
@@ -134,6 +160,7 @@ function AdminPage() {
                 key={resolved.item.id}
                 itemId={resolved.item.id}
                 sections={resolved.item.sections}
+                onDirtyChange={setIsEditorDirty}
               />
             )}
             {resolved.item.view === "directory" && resolved.item.dataSource.type === "static" && (
@@ -142,6 +169,7 @@ function AdminPage() {
                 itemId={resolved.item.id}
                 columns={resolved.item.dataSource.columns}
                 rows={resolved.item.dataSource.rows}
+                onDirtyChange={setIsEditorDirty}
               />
             )}
             {resolved.item.view === "checklist" && (
@@ -149,6 +177,7 @@ function AdminPage() {
                 key={resolved.item.id}
                 itemId={resolved.item.id}
                 items={resolved.item.items}
+                onDirtyChange={setIsEditorDirty}
               />
             )}
             {resolved.item.view === "flow" && (
@@ -158,6 +187,7 @@ function AdminPage() {
                 intro={resolved.item.intro}
                 faqs={resolved.item.faqs}
                 roadmap={resolved.item.roadmap}
+                onDirtyChange={setIsEditorDirty}
               />
             )}
             {resolved.item.view === "stage" && (
@@ -165,6 +195,7 @@ function AdminPage() {
                 key={resolved.item.id}
                 itemId={resolved.item.id}
                 content={resolved.item}
+                onDirtyChange={setIsEditorDirty}
               />
             )}
           </div>

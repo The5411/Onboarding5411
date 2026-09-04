@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
+import { SaveBar } from "@/components/admin/SaveBar";
+import { useContentEditorState } from "@/hooks/useContentEditorState";
 import { updateNavItemContent } from "@/lib/onboarding/content.queries";
 import type { DirectoryColumn } from "@/lib/onboarding/nav-tree";
 
@@ -8,42 +8,37 @@ export function DirectoryEditor({
   itemId,
   columns,
   rows: initialRows,
+  onDirtyChange,
 }: {
   itemId: string;
   columns: DirectoryColumn[];
   rows: Record<string, string>[];
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const queryClient = useQueryClient();
-  const [rows, setRows] = useState(initialRows);
-  const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const {
+    content: rows,
+    setContent: setRows,
+    saving,
+    hasUndo,
+    save,
+    undoLastSave,
+  } = useContentEditorState(
+    itemId,
+    initialRows,
+    (rows) => updateNavItemContent(itemId, { dataSource: { type: "static", columns, rows } }),
+    onDirtyChange,
+  );
 
   const updateCell = (index: number, key: string, value: string) => {
-    setSavedAt(null);
     setRows((prev) => prev.map((row, i) => (i === index ? { ...row, [key]: value } : row)));
   };
 
   const addRow = () => {
-    setSavedAt(null);
     setRows((prev) => [...prev, Object.fromEntries(columns.map((c) => [c.key, ""]))]);
   };
 
   const removeRow = (index: number) => {
-    setSavedAt(null);
     setRows((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await updateNavItemContent(itemId, {
-        dataSource: { type: "static", columns, rows },
-      });
-      await queryClient.invalidateQueries({ queryKey: ["content-tree"] });
-      setSavedAt(Date.now());
-    } finally {
-      setSaving(false);
-    }
   };
 
   return (
@@ -97,18 +92,7 @@ export function DirectoryEditor({
         Agregar fila
       </button>
 
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity disabled:opacity-60"
-          style={{ background: "var(--gradient-hero)" }}
-        >
-          {saving ? "Guardando..." : "Guardar cambios"}
-        </button>
-        {savedAt && <span className="text-xs text-muted-foreground">Guardado ✓</span>}
-      </div>
+      <SaveBar saving={saving} hasUndo={hasUndo} onSave={save} onUndo={undoLastSave} />
     </div>
   );
 }

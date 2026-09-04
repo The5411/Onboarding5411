@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Check, ChevronRight, LogOut, Search, Settings } from "lucide-react";
+import { Check, ChevronRight, LogOut, Search, Settings, Star } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
 import { useAuth } from "@/hooks/useAuth";
-import { useContentTree } from "@/lib/onboarding/content.queries";
+import { useFavorites } from "@/hooks/useFavorites";
+import { findNavItem, useContentTree } from "@/lib/onboarding/content.queries";
 import { getLeafIds, HOME_ICON, HOME_ID, type NavItem } from "@/lib/onboarding/nav-tree";
 
 function itemMatchesQuery(item: NavItem, query: string): boolean {
@@ -32,21 +33,26 @@ function NavItemRow({
   selectedId,
   onSelect,
   forceExpanded,
+  isFavorite,
+  toggleFavorite,
 }: {
   item: NavItem;
   depth: number;
   selectedId: string;
   onSelect: (id: string) => void;
   forceExpanded: boolean;
+  isFavorite: (id: string) => boolean;
+  toggleFavorite: (id: string) => void;
 }) {
   const [open, setOpen] = useState(true);
   const hasChildren = !!item.children?.length;
   const isOpen = forceExpanded || open;
   const Icon = item.icon;
+  const favorite = isFavorite(item.id);
 
   return (
     <SidebarMenuItem>
-      <div className="flex items-center gap-0.5">
+      <div className="group/row flex items-center gap-0.5">
         {hasChildren ? (
           <button
             type="button"
@@ -69,6 +75,19 @@ function NavItemRow({
           <Icon />
           <span>{item.label}</span>
         </SidebarMenuButton>
+        <button
+          type="button"
+          onClick={() => toggleFavorite(item.id)}
+          aria-label={favorite ? "Quitar de favoritos" : "Marcar como favorito"}
+          aria-pressed={favorite}
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-opacity ${
+            favorite
+              ? "text-primary opacity-100"
+              : "text-sidebar-foreground/40 opacity-0 hover:text-sidebar-foreground group-hover/row:opacity-100"
+          }`}
+        >
+          <Star className={`h-3.5 w-3.5 ${favorite ? "fill-current" : ""}`} />
+        </button>
       </div>
       {hasChildren && isOpen && (
         <SidebarMenu className="mt-0.5 ml-3.5 border-l border-sidebar-border pl-2.5">
@@ -80,6 +99,8 @@ function NavItemRow({
               selectedId={selectedId}
               onSelect={onSelect}
               forceExpanded={forceExpanded}
+              isFavorite={isFavorite}
+              toggleFavorite={toggleFavorite}
             />
           ))}
         </SidebarMenu>
@@ -99,10 +120,14 @@ export function AppSidebar({
   const { getGroupProgress } = useOnboardingProgress();
   const { user, profile, signOut } = useAuth();
   const { tracks } = useContentTree();
+  const { favorites, isFavorite, toggleFavorite } = useFavorites();
   const [query, setQuery] = useState("");
   const [openTracks, setOpenTracks] = useState<Record<string, boolean>>({});
 
   const normalizedQuery = query.trim().toLowerCase();
+  const favoriteItems = favorites
+    .map((id) => findNavItem(tracks, id)?.item)
+    .filter((item): item is NavItem => !!item);
 
   return (
     <Sidebar>
@@ -133,6 +158,29 @@ export function AppSidebar({
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
+
+        {!normalizedQuery && favoriteItems.length > 0 && (
+          <SidebarGroup>
+            <div className="mb-1 flex items-center gap-1.5 px-2 text-xs font-bold uppercase tracking-wide text-sidebar-foreground/70">
+              <Star className="h-3 w-3 fill-current text-primary" />
+              Favoritos
+            </div>
+            <SidebarMenu>
+              {favoriteItems.map((item) => (
+                <NavItemRow
+                  key={item.id}
+                  item={item}
+                  depth={0}
+                  selectedId={selectedId}
+                  onSelect={onSelect}
+                  forceExpanded={false}
+                  isFavorite={isFavorite}
+                  toggleFavorite={toggleFavorite}
+                />
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
 
         {tracks.map((track) => {
           const visibleItems = normalizedQuery
@@ -181,6 +229,8 @@ export function AppSidebar({
                         selectedId={selectedId}
                         onSelect={onSelect}
                         forceExpanded={!!normalizedQuery}
+                        isFavorite={isFavorite}
+                        toggleFavorite={toggleFavorite}
                       />
                     ))}
                   </SidebarMenu>

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/onboarding/AppSidebar";
+import { CommandPalette } from "@/components/onboarding/CommandPalette";
 import { ContentPanel } from "@/components/onboarding/ContentPanel";
 import { HOME_ID } from "@/lib/onboarding/nav-tree";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,6 +51,7 @@ function OnboardingApp() {
       <SidebarInset>
         <ContentPanel selectedId={selectedId} onSelect={setSelectedId} />
       </SidebarInset>
+      <CommandPalette onSelect={setSelectedId} />
     </SidebarProvider>
   );
 }

@@ -33,6 +33,11 @@ export type DocSection = {
   // Marca la tarjeta como un llamado de atención (p.ej. "Puntos críticos /
   // Validaciones"): la pinta con acento rojo en vez del estilo neutro default.
   accent?: "warning";
+  // ISO timestamp del último cambio a esta tarjeta puntual, para mostrar
+  // "editado hace X" en /admin. Se pisa cada vez que se toca el título, el
+  // html, el accent o las imágenes — no hace falta migrar nada en Supabase,
+  // viaja como una key más dentro del jsonb de `content`.
+  updatedAt?: string;
 };
 
 export type DirectoryColumn = {
@@ -54,6 +59,11 @@ export type FaqItem = {
   id: string;
   q: string;
   a: string;
+  // Agrupa preguntas relacionadas en la vista pública (ej. "Inbound",
+  // "Outbound"). Sin categoría (o si ninguna pregunta la usa todavía) se
+  // sigue viendo como lista plana, igual que antes.
+  category?: string;
+  updatedAt?: string;
 };
 
 // Textos e imágenes editables del mapa visual de Flujo operativo

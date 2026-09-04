@@ -1,10 +1,14 @@
 import { useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Plus, Trash2 } from "lucide-react";
+import { ImagePlus } from "lucide-react";
+import { FaqListEditor } from "@/components/admin/FaqListEditor";
 import { SectionListEditor } from "@/components/admin/SectionListEditor";
+import { SaveBar } from "@/components/admin/SaveBar";
+import { useContentEditorState } from "@/hooks/useContentEditorState";
 import { updateNavItemContent } from "@/lib/onboarding/content.queries";
 import { uploadContentImage } from "@/lib/supabase/uploadContentImage";
 import type { DocSection, FaqItem, RoadmapContent } from "@/lib/onboarding/nav-tree";
+
+type FlowContent = { intro: DocSection[]; faqs: FaqItem[]; roadmap: RoadmapContent };
 
 // Edita la intro + FAQ + textos/imágenes del mapa visual de "Flujo
 // operativo" (la imagen de fondo y la posición de los hotspots se quedan en
@@ -15,60 +19,41 @@ export function FlowContentEditor({
   intro: initialIntro,
   faqs: initialFaqs,
   roadmap: initialRoadmap,
+  onDirtyChange,
 }: {
   itemId: string;
   intro: DocSection[];
   faqs: FaqItem[];
   roadmap: RoadmapContent;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const queryClient = useQueryClient();
-  const [intro, setIntro] = useState(initialIntro);
-  const [faqs, setFaqs] = useState(initialFaqs);
-  const [roadmap, setRoadmap] = useState(initialRoadmap);
-  const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await updateNavItemContent(itemId, { intro, faqs, roadmap });
-      await queryClient.invalidateQueries({ queryKey: ["content-tree"] });
-      setSavedAt(Date.now());
-    } finally {
-      setSaving(false);
-    }
-  };
+  const { content, setContent, saving, hasUndo, save, undoLastSave } =
+    useContentEditorState<FlowContent>(
+      itemId,
+      { intro: initialIntro, faqs: initialFaqs, roadmap: initialRoadmap },
+      (content) => updateNavItemContent(itemId, content),
+      onDirtyChange,
+    );
+  const { intro, faqs, roadmap } = content;
 
   const updateHotspot = (
     number: number,
     patch: Partial<{ title: string; description: string }>,
   ) => {
-    setSavedAt(null);
-    setRoadmap((prev) => ({
+    setContent((prev) => ({
       ...prev,
-      hotspots: prev.hotspots.map((h) => (h.number === number ? { ...h, ...patch } : h)),
+      roadmap: {
+        ...prev.roadmap,
+        hotspots: prev.roadmap.hotspots.map((h) => (h.number === number ? { ...h, ...patch } : h)),
+      },
     }));
   };
 
   const updateModalImage = (key: keyof RoadmapContent["modalImages"], url: string) => {
-    setSavedAt(null);
-    setRoadmap((prev) => ({ ...prev, modalImages: { ...prev.modalImages, [key]: url } }));
-  };
-
-  const updateFaq = (id: string, patch: Partial<FaqItem>) => {
-    setSavedAt(null);
-    setFaqs((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
-  };
-
-  const addFaq = () => {
-    setSavedAt(null);
-    setFaqs((prev) => [...prev, { id: crypto.randomUUID(), q: "Nueva pregunta", a: "" }]);
-  };
-
-  const removeFaq = (id: string) => {
-    if (!window.confirm("¿Borrar esta pregunta?")) return;
-    setSavedAt(null);
-    setFaqs((prev) => prev.filter((f) => f.id !== id));
+    setContent((prev) => ({
+      ...prev,
+      roadmap: { ...prev.roadmap, modalImages: { ...prev.roadmap.modalImages, [key]: url } },
+    }));
   };
 
   return (
@@ -77,10 +62,7 @@ export function FlowContentEditor({
         <h3 className="mb-3 text-lg font-bold">Introducción</h3>
         <SectionListEditor
           sections={intro}
-          onChange={(next) => {
-            setSavedAt(null);
-            setIntro(next);
-          }}
+          onChange={(intro) => setContent((prev) => ({ ...prev, intro }))}
           addLabel="Agregar tarjeta"
         />
       </div>
@@ -139,59 +121,15 @@ export function FlowContentEditor({
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-5">
-        <h3 className="mb-4 text-lg font-bold">Preguntas frecuentes</h3>
-        <div className="space-y-3">
-          {faqs.map((faq) => (
-            <div key={faq.id} className="space-y-2 rounded-xl border border-border p-3">
-              <div className="flex items-center gap-2">
-                <input
-                  value={faq.q}
-                  onChange={(e) => updateFaq(faq.id, { q: e.target.value })}
-                  placeholder="Pregunta"
-                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-ring"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeFaq(faq.id)}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-destructive transition-colors hover:bg-destructive/10"
-                  aria-label="Borrar pregunta"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <textarea
-                value={faq.a}
-                onChange={(e) => updateFaq(faq.id, { a: e.target.value })}
-                placeholder="Respuesta"
-                rows={2}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={addFaq}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/40"
-        >
-          <Plus className="h-4 w-4" />
-          Agregar pregunta
-        </button>
+        <h3 className="mb-1 text-lg font-bold">Preguntas frecuentes</h3>
+        <p className="mb-4 text-xs text-muted-foreground">
+          La categoría es opcional — si la usás, la vista pública agrupa las preguntas por
+          categoría; si la dejás vacía en todas, se sigue viendo como una sola lista.
+        </p>
+        <FaqListEditor faqs={faqs} onChange={(faqs) => setContent((prev) => ({ ...prev, faqs }))} />
       </div>
 
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity disabled:opacity-60"
-          style={{ background: "var(--gradient-hero)" }}
-        >
-          {saving ? "Guardando..." : "Guardar cambios"}
-        </button>
-        {savedAt && <span className="text-xs text-muted-foreground">Guardado ✓</span>}
-      </div>
+      <SaveBar saving={saving} hasUndo={hasUndo} onSave={save} onUndo={undoLastSave} />
     </div>
   );
 }

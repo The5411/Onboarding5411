@@ -1,45 +1,66 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Copy, GripVertical, Plus, Trash2 } from "lucide-react";
+import { SaveBar } from "@/components/admin/SaveBar";
+import { useContentEditorState } from "@/hooks/useContentEditorState";
 import { updateNavItemContent } from "@/lib/onboarding/content.queries";
 import type { ChecklistItem } from "@/lib/onboarding/nav-tree";
 
 export function ChecklistEditor({
   itemId,
   items: initialItems,
+  onDirtyChange,
 }: {
   itemId: string;
   items: ChecklistItem[];
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const queryClient = useQueryClient();
-  const [items, setItems] = useState(initialItems);
-  const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const {
+    content: items,
+    setContent: setItems,
+    saving,
+    hasUndo,
+    save,
+    undoLastSave,
+  } = useContentEditorState(
+    itemId,
+    initialItems,
+    (items) => updateNavItemContent(itemId, { items }),
+    onDirtyChange,
+  );
+  const [dragId, setDragId] = useState<string | null>(null);
 
   const updateItem = (id: string, patch: Partial<ChecklistItem>) => {
-    setSavedAt(null);
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
   };
 
   const addItem = () => {
-    setSavedAt(null);
     setItems((prev) => [...prev, { id: crypto.randomUUID(), label: "Nueva tarea" }]);
   };
 
+  const duplicateItem = (id: string) => {
+    setItems((prev) => {
+      const index = prev.findIndex((i) => i.id === id);
+      if (index === -1) return prev;
+      const copy = { ...prev[index], id: crypto.randomUUID() };
+      return [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)];
+    });
+  };
+
   const removeItem = (id: string) => {
-    setSavedAt(null);
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const save = async () => {
-    setSaving(true);
-    try {
-      await updateNavItemContent(itemId, { items });
-      await queryClient.invalidateQueries({ queryKey: ["content-tree"] });
-      setSavedAt(Date.now());
-    } finally {
-      setSaving(false);
-    }
+  const reorderByDrag = (draggedId: string, dropId: string) => {
+    if (draggedId === dropId) return;
+    setItems((prev) => {
+      const from = prev.findIndex((i) => i.id === draggedId);
+      const to = prev.findIndex((i) => i.id === dropId);
+      if (from === -1 || to === -1) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
   };
 
   return (
@@ -47,8 +68,22 @@ export function ChecklistEditor({
       {items.map((item) => (
         <div
           key={item.id}
-          className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3"
+          draggable
+          onDragStart={() => setDragId(item.id)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (dragId) reorderByDrag(dragId, item.id);
+            setDragId(null);
+          }}
+          onDragEnd={() => setDragId(null)}
+          className={`flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3 transition-opacity ${
+            dragId === item.id ? "opacity-50" : ""
+          }`}
         >
+          <span className="flex h-9 w-5 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing">
+            <GripVertical className="h-4 w-4" />
+          </span>
           <input
             value={item.label}
             onChange={(e) => updateItem(item.id, { label: e.target.value })}
@@ -61,6 +96,14 @@ export function ChecklistEditor({
             placeholder="Link opcional (https://...)"
             className="min-w-[180px] flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
+          <button
+            type="button"
+            onClick={() => duplicateItem(item.id)}
+            title="Duplicar tarea"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-secondary"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
           <button
             type="button"
             onClick={() => removeItem(item.id)}
@@ -81,18 +124,7 @@ export function ChecklistEditor({
         Agregar tarea
       </button>
 
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity disabled:opacity-60"
-          style={{ background: "var(--gradient-hero)" }}
-        >
-          {saving ? "Guardando..." : "Guardar cambios"}
-        </button>
-        {savedAt && <span className="text-xs text-muted-foreground">Guardado ✓</span>}
-      </div>
+      <SaveBar saving={saving} hasUndo={hasUndo} onSave={save} onUndo={undoLastSave} />
     </div>
   );
 }
